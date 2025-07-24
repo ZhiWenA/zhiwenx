@@ -4,6 +4,7 @@ import 'dart:async';
 import 'chat_models.dart';
 import 'openai_service.dart';
 import 'openai_config.dart';
+import 'voice_service.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -19,12 +20,23 @@ class _ChatPageState extends State<ChatPage> {
   bool _isLoading = false;
   bool _isConnected = false;
   StreamSubscription<String>? _streamSubscription;
+  
+  // 语音功能相关
+  final VoiceService _voiceService = VoiceService();
+  StreamSubscription<String>? _speechResultSubscription;
+  StreamSubscription<VoiceState>? _voiceStateSubscription;
+  bool _isVoiceEnabled = false;
+  bool _isListening = false;
+  bool _isSpeaking = false;
+  bool _autoPlayResponse = true; // 自动播放AI回复
+  String _currentSpeechText = '';
 
   @override
   void initState() {
     super.initState();
     _checkConnection();
     _addSystemMessage();
+    _initializeVoice();
   }
 
   @override
@@ -32,7 +44,90 @@ class _ChatPageState extends State<ChatPage> {
     _messageController.dispose();
     _scrollController.dispose();
     _streamSubscription?.cancel();
+    _speechResultSubscription?.cancel();
+    _voiceStateSubscription?.cancel();
+    _voiceService.dispose();
     super.dispose();
+  }
+
+  // 初始化语音功能
+  void _initializeVoice() async {
+    try {
+      final success = await _voiceService.initialize();
+      setState(() {
+        _isVoiceEnabled = success;
+      });
+      
+      if (success) {
+        // 监听语音识别结果
+        _speechResultSubscription = _voiceService.speechResultStream.listen((text) {
+          setState(() {
+            _currentSpeechText = text;
+          });
+        });
+        
+        // 监听语音状态变化
+        _voiceStateSubscription = _voiceService.voiceStateStream.listen((state) {
+          setState(() {
+            _isListening = state == VoiceState.listening;
+            _isSpeaking = state == VoiceState.speaking;
+          });
+          
+          if (state == VoiceState.error) {
+            _showErrorSnackBar('语音功能出现错误');
+          }
+        });
+      }
+    } catch (e) {
+      _showErrorSnackBar('语音功能初始化失败: $e');
+    }
+  }
+
+  // 开始语音输入
+  void _startVoiceInput() async {
+    if (!_isVoiceEnabled) {
+      _showErrorSnackBar('语音功能未启用');
+      return;
+    }
+    
+    if (_isSpeaking) {
+      await _voiceService.stopSpeaking();
+    }
+    
+    setState(() {
+      _currentSpeechText = '';
+    });
+    
+    await _voiceService.startListening();
+  }
+
+  // 停止语音输入并发送消息
+  void _stopVoiceInputAndSend() async {
+    if (_isListening) {
+      await _voiceService.stopListening();
+      
+      // 等待一小段时间确保语音识别完成
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      if (_currentSpeechText.trim().isNotEmpty) {
+        _messageController.text = _currentSpeechText;
+        _sendMessage();
+      }
+    }
+  }
+
+  // 播放AI回复
+  void _speakAIResponse(String text) async {
+    if (_isVoiceEnabled && _autoPlayResponse && text.trim().isNotEmpty) {
+      await _voiceService.speak(text);
+    }
+  }
+
+  // 停止AI语音播放
+  void _stopAISpeaking() async {
+    if (_isSpeaking) {
+      await _voiceService.stopSpeaking();
+    }
   }
 
   void _checkConnection() async {
@@ -55,6 +150,11 @@ class _ChatPageState extends State<ChatPage> {
   void _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty || _isLoading) return;
+
+    // 停止任何正在进行的语音播放
+    if (_isSpeaking) {
+      await _voiceService.stopSpeaking();
+    }
 
     // 添加用户消息
     final userMessage = ChatMessage.user(text);
@@ -101,6 +201,11 @@ class _ChatPageState extends State<ChatPage> {
             _isLoading = false;
           });
           _scrollToBottom();
+          
+          // AI回复完成后，自动播放语音
+          if (fullContent.trim().isNotEmpty) {
+            _speakAIResponse(fullContent);
+          }
         },
       );
     } catch (e) {
@@ -153,25 +258,72 @@ class _ChatPageState extends State<ChatPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('API 配置'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('API Key: ${OpenAIConfig.apiKey.isNotEmpty ? '已配置' : '未配置'}'),
-            const SizedBox(height: 8),
-            Text('Base URL: ${OpenAIConfig.baseUrl}'),
-            const SizedBox(height: 8),
-            Text('Model: ${OpenAIConfig.model}'),
-            const SizedBox(height: 16),
-            const Text(
-              '请在项目根目录创建 .env 文件并配置以下内容：\n\n'
-              'OPENAI_API_KEY=your_api_key\n'
-              'OPENAI_BASE_URL=https://api.openai.com\n'
-              'OPENAI_MODEL=gpt-3.5-turbo',
-              style: TextStyle(fontSize: 12, fontFamily: 'monospace'),
-            ),
-          ],
+        title: const Text('设置'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // API 配置部分
+              const Text('API 配置', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text('API Key: ${OpenAIConfig.apiKey.isNotEmpty ? '已配置' : '未配置'}'),
+              const SizedBox(height: 4),
+              Text('Base URL: ${OpenAIConfig.baseUrl}'),
+              const SizedBox(height: 4),
+              Text('Model: ${OpenAIConfig.model}'),
+              const SizedBox(height: 16),
+              
+              // 语音功能配置部分
+              const Text('语音功能', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    _isVoiceEnabled ? Icons.check_circle : Icons.error,
+                    color: _isVoiceEnabled ? Colors.green : Colors.red,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(_isVoiceEnabled ? '语音功能已启用' : '语音功能未启用'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('自动播放AI回复'),
+                  Switch(
+                    value: _autoPlayResponse,
+                    onChanged: (value) {
+                      setState(() {
+                        _autoPlayResponse = value;
+                      });
+                      Navigator.of(context).pop();
+                      _showSettingsDialog(); // 重新打开对话框以更新状态
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // 配置说明
+              const Text(
+                '配置说明：\n\n'
+                'OpenAI API 配置：\n'
+                '请在项目根目录创建 .env 文件并配置：\n'
+                'OPENAI_API_KEY=your_api_key\n'
+                'OPENAI_BASE_URL=https://api.openai.com\n'
+                'OPENAI_MODEL=gpt-3.5-turbo\n\n'
+                '语音功能配置：\n'
+                '请在 .env 文件中配置腾讯云语音服务：\n'
+                'TENCENT_APP_ID=your_app_id\n'
+                'TENCENT_SECRET_ID=your_secret_id\n'
+                'TENCENT_SECRET_KEY=your_secret_key',
+                style: TextStyle(fontSize: 12, fontFamily: 'monospace'),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -182,6 +334,7 @@ class _ChatPageState extends State<ChatPage> {
             onPressed: () {
               Navigator.of(context).pop();
               _checkConnection();
+              _initializeVoice();
             },
             child: const Text('重新检测'),
           ),
@@ -215,27 +368,52 @@ class _ChatPageState extends State<ChatPage> {
             const SizedBox(width: 8),
           ],
           Flexible(
-            child: GestureDetector(
-              onLongPress: () {
-                Clipboard.setData(ClipboardData(text: message.content));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('已复制到剪贴板')),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isUser ? Colors.blue.shade500 : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  message.content,
-                  style: TextStyle(
-                    color: isUser ? Colors.white : Colors.black87,
-                    fontSize: 16,
+            child: Column(
+              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onLongPress: () {
+                    Clipboard.setData(ClipboardData(text: message.content));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('已复制到剪贴板')),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isUser ? Colors.blue.shade500 : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      message.content,
+                      style: TextStyle(
+                        color: isUser ? Colors.white : Colors.black87,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                
+                // AI消息添加语音播放按钮
+                if (!isUser && _isVoiceEnabled && message.content.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: IconButton(
+                      onPressed: () => _speakAIResponse(message.content),
+                      icon: Icon(
+                        Icons.volume_up,
+                        size: 20,
+                        color: Colors.grey.shade600,
+                      ),
+                      tooltip: '播放语音',
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
+                      padding: const EdgeInsets.all(4),
+                    ),
+                  ),
+              ],
             ),
           ),
           if (isUser) ...[
@@ -263,6 +441,24 @@ class _ChatPageState extends State<ChatPage> {
         backgroundColor: Colors.blue.shade600,
         foregroundColor: Colors.white,
         actions: [
+          // 语音播放控制按钮
+          if (_isSpeaking)
+            IconButton(
+              onPressed: _stopAISpeaking,
+              icon: const Icon(Icons.stop),
+              tooltip: '停止播放',
+            ),
+          
+          // 语音功能状态指示器
+          IconButton(
+            onPressed: _isVoiceEnabled ? null : _showSettingsDialog,
+            icon: Icon(
+              _isVoiceEnabled ? Icons.mic : Icons.mic_off,
+              color: _isVoiceEnabled ? Colors.white : Colors.red.shade200,
+            ),
+            tooltip: _isVoiceEnabled ? '语音功能已启用' : '语音功能未启用，点击查看配置',
+          ),
+          
           IconButton(
             onPressed: _showSettingsDialog,
             icon: Icon(
@@ -316,7 +512,7 @@ class _ChatPageState extends State<ChatPage> {
           ),
           
           // 加载指示器
-          if (_isLoading)
+          if (_isLoading || _isSpeaking)
             Container(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -327,14 +523,16 @@ class _ChatPageState extends State<ChatPage> {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _isSpeaking ? Colors.green.shade600 : Colors.blue.shade600
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text('AI 正在生成回复...'),
+                  Text(_isSpeaking ? 'AI 正在播放回复...' : 'AI 正在生成回复...'),
                   const SizedBox(width: 12),
                   TextButton(
-                    onPressed: _stopGeneration,
+                    onPressed: _isSpeaking ? _stopAISpeaking : _stopGeneration,
                     child: const Text('停止'),
                   ),
                 ],
@@ -354,42 +552,104 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    maxLines: null,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _sendMessage(),
-                    decoration: InputDecoration(
-                      hintText: '输入消息...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                // 语音识别状态显示
+                if (_isListening || _currentSpeechText.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: _isListening ? Colors.red.shade50 : Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _isListening ? Colors.red.shade200 : Colors.blue.shade200,
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade600,
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    onPressed: _isLoading ? null : _sendMessage,
-                    icon: const Icon(
-                      Icons.send,
-                      color: Colors.white,
+                    child: Row(
+                      children: [
+                        Icon(
+                          _isListening ? Icons.mic : Icons.mic_none,
+                          color: _isListening ? Colors.red : Colors.blue,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _isListening ? '正在听取语音...' : _currentSpeechText,
+                            style: TextStyle(
+                              color: _isListening ? Colors.red.shade700 : Colors.blue.shade700,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        if (_isListening)
+                          TextButton(
+                            onPressed: _stopVoiceInputAndSend,
+                            child: const Text('完成'),
+                          ),
+                      ],
                     ),
                   ),
+                
+                Row(
+                  children: [
+                    // 语音输入按钮
+                    if (_isVoiceEnabled)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: _isListening ? Colors.red.shade600 : Colors.green.shade600,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          onPressed: _isLoading ? null : (_isListening ? _stopVoiceInputAndSend : _startVoiceInput),
+                          icon: Icon(
+                            _isListening ? Icons.stop : Icons.mic,
+                            color: Colors.white,
+                          ),
+                          tooltip: _isListening ? '停止录音并发送' : '语音输入',
+                        ),
+                      ),
+                    
+                    if (_isVoiceEnabled) const SizedBox(width: 8),
+                    
+                    Expanded(
+                      child: TextField(
+                        controller: _messageController,
+                        maxLines: null,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _sendMessage(),
+                        decoration: InputDecoration(
+                          hintText: '输入消息...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey.shade100,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade600,
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        onPressed: _isLoading ? null : _sendMessage,
+                        icon: const Icon(
+                          Icons.send,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
