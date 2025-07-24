@@ -1,4 +1,4 @@
-package com.example.zhiwenx
+package com.tianli.zhiwenx
 
 import io.flutter.embedding.android.FlutterActivity
 

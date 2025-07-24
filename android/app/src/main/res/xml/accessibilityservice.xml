@@ -8,5 +8,5 @@
     android:canRequestTouchExplorationMode="false"
     android:canPerformGestures="true"
     android:description="@string/accessibility_service_description"
-    android:settingsActivity="com.example.zhiwenx.MainActivity">
+    android:settingsActivity="com.tianli.zhiwenx.MainActivity">
 </accessibility-service>
