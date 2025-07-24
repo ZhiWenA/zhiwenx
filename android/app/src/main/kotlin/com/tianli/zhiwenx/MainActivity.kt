@@ -295,91 +295,15 @@ class MainActivity : FlutterActivity() {
     }
     
     private fun requestSmartAccessibilityPermission() {
+        // 直接跳转到无障碍设置，Flutter端会处理UI提示
         val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         
-        // 创建现代化的 Material Design 对话框
-        val builder = AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog)
-        builder.setIcon(android.R.drawable.ic_dialog_info)
-        builder.setTitle("开启智能录制服务")
-        
-        // 使用结构化的消息布局
-        val message = buildString {
-            append("📱 请按照以下步骤开启智能录制服务：\n\n")
-            append("1️⃣ 在无障碍设置页面中找到\n")
-            append("   「智问X - 智能操作录制服务」\n\n")
-            append("2️⃣ 点击进入该服务设置页面\n\n")
-            append("3️⃣ 打开服务开关（切换到开启状态）\n\n")
-            append("4️⃣ 在弹出的权限对话框中点击「确定」\n\n")
-            append("⚠️ 重要提示：\n")
-            append("• 如果只看到「无障碍快捷按钮」选项，请查找服务开关\n")
-            append("• 确保开关处于「开启」状态\n")
-            append("• 如果问题持续，请重新安装应用")
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "无法打开无障碍设置，请手动前往：设置 > 无障碍", Toast.LENGTH_LONG).show()
         }
-        
-        builder.setMessage(message)
-        
-        // 使用 Material Design 按钮样式
-        builder.setPositiveButton("前往设置 🚀") { _, _ ->
-            try {
-                startActivity(intent)
-            } catch (e: Exception) {
-                Toast.makeText(this, "⚠️ 无法打开无障碍设置，请手动前往：\n设置 > 无障碍", Toast.LENGTH_LONG).show()
-            }
-        }
-        
-        builder.setNegativeButton("暂不设置", null)
-        
-        // 添加中性按钮提供帮助
-        builder.setNeutralButton("帮助 ℹ️") { _, _ ->
-            showAccessibilityHelp()
-        }
-        
-        val dialog = builder.create()
-        dialog.show()
-        
-        // 设置按钮颜色和样式
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.let { button ->
-            button.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
-            button.textSize = 16f
-        }
-        
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.let { button ->
-            button.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray))
-        }
-        
-        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.let { button ->
-            button.setTextColor(ContextCompat.getColor(this, android.R.color.holo_blue_light))
-        }
-    }
-    
-    private fun showAccessibilityHelp() {
-        val builder = AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog)
-        builder.setIcon(android.R.drawable.ic_dialog_info)
-        builder.setTitle("无障碍服务帮助")
-        
-        val helpMessage = buildString {
-            append("🔧 如果无法找到服务或开关：\n\n")
-            append("方法一：\n")
-            append("• 完全卸载应用\n")
-            append("• 重新安装最新版本\n")
-            append("• 重启设备后重试\n\n")
-            append("方法二：\n")
-            append("• 设置 > 应用管理 > 智问X\n")
-            append("• 清除应用数据\n")
-            append("• 重新打开应用\n\n")
-            append("方法三：\n")
-            append("• 设置 > 无障碍 > 下载的服务\n")
-            append("• 查找「智问X」相关服务\n\n")
-            append("⭐ 服务开启后，您将看到：\n")
-            append("• 服务开关（可切换开启/关闭）\n")
-            append("• 服务说明和权限描述\n")
-            append("• 快捷方式设置（可选）")
-        }
-        
-        builder.setMessage(helpMessage)
-        builder.setPositiveButton("我知道了", null)
-        builder.show()
     }
     
     private fun startActionRecording() {
