@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'automation_rule_engine.dart';
 import 'automation_test_page.dart';
-import 'dart:convert';
+import 'utils/accessibility_permission_manager.dart';
+import 'widget_capture_page.dart';
 
 class AutomationRulePage extends StatefulWidget {
   const AutomationRulePage({super.key});
@@ -78,6 +79,17 @@ class _AutomationRulePageState extends State<AutomationRulePage> {
   }
 
   Future<void> _executeRule(AutomationRule rule) async {
+    // 先检查无障碍权限
+    final hasPermission = await AccessibilityPermissionManager.checkAndRequestPermission(
+      context,
+      feature: '自动化规则执行',
+    );
+    
+    if (!hasPermission) {
+      _showSnackBar('需要无障碍权限才能执行自动化规则', Colors.red);
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _statusMessage = '正在执行规则: ${rule.name}';
@@ -328,88 +340,6 @@ class _AutomationRulePageState extends State<AutomationRulePage> {
     );
   }
 
-  Future<void> _showScreenWidgets() async {
-    setState(() {
-      _isLoading = true;
-      _statusMessage = '正在获取屏幕控件信息...';
-    });
-
-    try {
-      final widgets = await AutomationRuleEngine.getScreenWidgets();
-      setState(() {
-        _statusMessage = '获取到 ${widgets.length} 个控件';
-      });
-      
-      if (!mounted) return;
-      
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('当前屏幕控件'),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 400,
-            child: ListView.builder(
-              itemCount: widgets.length,
-              itemBuilder: (context, index) {
-                final widget = widgets[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 2),
-                  child: ExpansionTile(
-                    title: Text(widget.className ?? '未知控件'),
-                    subtitle: Text(widget.text ?? widget.contentDescription ?? '无文本'),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (widget.resourceId != null)
-                              Text('资源ID: ${widget.resourceId}'),
-                            if (widget.text != null)
-                              Text('文本: ${widget.text}'),
-                            if (widget.contentDescription != null)
-                              Text('描述: ${widget.contentDescription}'),
-                            Text('可点击: ${widget.isClickable}'),
-                            Text('可编辑: ${widget.className?.contains('EditText') ?? false}'),
-                            Text('位置: (${widget.bounds.left}, ${widget.bounds.top}) - (${widget.bounds.right}, ${widget.bounds.bottom})'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                final jsonString = jsonEncode(widgets.map((w) => w.toJson()).toList());
-                Clipboard.setData(ClipboardData(text: jsonString));
-                _showSnackBar('控件信息已复制到剪贴板', Colors.blue);
-              },
-              child: const Text('复制JSON'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('关闭'),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      setState(() {
-        _statusMessage = '获取控件信息失败: $e';
-      });
-      _showSnackBar('获取控件信息失败: $e', Colors.red);
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -439,9 +369,14 @@ class _AutomationRulePageState extends State<AutomationRulePage> {
             tooltip: '功能测试',
           ),
           IconButton(
-            onPressed: _showScreenWidgets,
-            icon: const Icon(Icons.visibility),
-            tooltip: '查看当前屏幕控件',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const WidgetCapturePage()),
+              );
+            },
+            icon: const Icon(Icons.widgets),
+            tooltip: '实时控件抓取',
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -585,7 +520,7 @@ class _AutomationRulePageState extends State<AutomationRulePage> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.deepPurple.withOpacity(0.1),
+                                  color: Colors.deepPurple.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(

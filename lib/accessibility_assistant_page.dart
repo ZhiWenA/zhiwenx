@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_accessibility_service/accessibility_event.dart';
 import 'package:flutter_accessibility_service/constants.dart';
 import 'package:flutter_accessibility_service/flutter_accessibility_service.dart';
+import 'utils/accessibility_permission_manager.dart';
 
 /// 无障碍浮层覆盖入口点
 @pragma("vm:entry-point")
@@ -22,64 +23,111 @@ class AccessibilityOverlayWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.black.withValues(alpha:0.8),
+      color: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.accessibility_new,
-              color: Colors.white,
-              size: 32,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '智问X辅助',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () async {
-                    await FlutterAccessibilityService.hideOverlayWindow();
-                  },
-                  icon: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () async {
-                    await FlutterAccessibilityService.performGlobalAction(
-                      GlobalAction.globalActionBack,
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () async {
-                    await FlutterAccessibilityService.performGlobalAction(
-                      GlobalAction.globalActionHome,
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.home,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 顶部图标和标题
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.accessibility_new,
+                  color: Colors.deepPurple,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '智问X辅助',
+                style: TextStyle(
+                  color: Colors.deepPurple,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // 按钮行
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildActionButton(
+                    icon: Icons.close,
+                    color: Colors.red,
+                    onPressed: () async {
+                      await FlutterAccessibilityService.hideOverlayWindow();
+                    },
+                    tooltip: '关闭',
+                  ),
+                  const SizedBox(width: 12),
+                  _buildActionButton(
+                    icon: Icons.arrow_back,
+                    color: Colors.blue,
+                    onPressed: () async {
+                      await FlutterAccessibilityService.performGlobalAction(
+                        GlobalAction.globalActionBack,
+                      );
+                    },
+                    tooltip: '返回',
+                  ),
+                  const SizedBox(width: 12),
+                  _buildActionButton(
+                    icon: Icons.home,
+                    color: Colors.green,
+                    onPressed: () async {
+                      await FlutterAccessibilityService.performGlobalAction(
+                        GlobalAction.globalActionHome,
+                      );
+                    },
+                    tooltip: '主页',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return Material(
+      color: color.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          child: Icon(
+            icon,
+            color: color,
+            size: 24,
+          ),
         ),
       ),
     );
@@ -114,23 +162,20 @@ class _AccessibilityAssistantPageState extends State<AccessibilityAssistantPage>
   }
 
   Future<void> _checkAccessibilityPermission() async {
-    final isEnabled = await FlutterAccessibilityService.isAccessibilityPermissionEnabled();
+    final isEnabled = await AccessibilityPermissionManager.checkPermission();
     setState(() {
       _isServiceEnabled = isEnabled;
     });
   }
 
   Future<void> _requestAccessibilityPermission() async {
-    final granted = await FlutterAccessibilityService.requestAccessibilityPermission();
+    final granted = await AccessibilityPermissionManager.checkAndRequestPermission(
+      context,
+      feature: '无障碍辅助',
+    );
     setState(() {
       _isServiceEnabled = granted;
     });
-    
-    if (granted) {
-      _showSnackBar('无障碍权限已授予', Colors.green);
-    } else {
-      _showSnackBar('无障碍权限被拒绝', Colors.red);
-    }
   }
 
   void _startAccessibilityStream() {
@@ -272,51 +317,95 @@ class _AccessibilityAssistantPageState extends State<AccessibilityAssistantPage>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 权限状态卡片
+            AccessibilityPermissionManager.buildPermissionStatusCard(
+              isEnabled: _isServiceEnabled,
+              currentAction: _currentAction,
+              onRequestPermission: _isServiceEnabled ? null : _requestAccessibilityPermission,
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // 安全模式控制卡片
             Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      _safeMode ? Icons.security : Icons.warning,
+                      color: _safeMode ? Colors.green : Colors.orange,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '安全模式: ${_safeMode ? "已开启" : "已关闭"}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _safeMode ? '限制危险操作，保护用户体验' : '允许所有操作，请谨慎使用',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: _safeMode,
+                      onChanged: (value) {
+                        setState(() {
+                          _safeMode = value;
+                        });
+                        _showSnackBar(
+                          _safeMode ? '已开启安全模式，不会拦截用户操作' : '已关闭安全模式，请谨慎使用',
+                          _safeMode ? Colors.green : Colors.orange,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            // 控制按钮
+            Card(
+              elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Text(
+                      '监听控制',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        Icon(
-                          _isServiceEnabled ? Icons.check_circle : Icons.error,
-                          color: _isServiceEnabled ? Colors.green : Colors.red,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '无障碍权限: ${_isServiceEnabled ? "已开启" : "未开启"}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        FilledButton.icon(
+                          onPressed: _isListening ? _stopAccessibilityStream : _startAccessibilityStream,
+                          icon: Icon(_isListening ? Icons.stop : Icons.play_arrow),
+                          label: Text(_isListening ? '停止监听' : '开始监听'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: _isListening ? Colors.red : Colors.green,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text('当前状态: $_currentAction'),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          _safeMode ? Icons.security : Icons.warning,
-                          color: _safeMode ? Colors.green : Colors.orange,
-                        ),
-                        const SizedBox(width: 8),
-                        Text('安全模式: ${_safeMode ? "已开启" : "已关闭"}'),
-                        const Spacer(),
-                        Switch(
-                          value: _safeMode,
-                          onChanged: (value) {
-                            setState(() {
-                              _safeMode = value;
-                            });
-                            _showSnackBar(
-                              _safeMode ? '已开启安全模式，不会拦截用户操作' : '已关闭安全模式，请谨慎使用',
-                              _safeMode ? Colors.green : Colors.orange,
-                            );
-                          },
+                        OutlinedButton.icon(
+                          onPressed: _clearEvents,
+                          icon: const Icon(Icons.clear),
+                          label: const Text('清空日志'),
                         ),
                       ],
                     ),
@@ -327,130 +416,187 @@ class _AccessibilityAssistantPageState extends State<AccessibilityAssistantPage>
             
             const SizedBox(height: 16),
             
-            // 控制按钮
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _isServiceEnabled ? null : _requestAccessibilityPermission,
-                  icon: const Icon(Icons.security),
-                  label: const Text('申请权限'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: _isListening ? _stopAccessibilityStream : _startAccessibilityStream,
-                  icon: Icon(_isListening ? Icons.stop : Icons.play_arrow),
-                  label: Text(_isListening ? '停止监听' : '开始监听'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: _clearEvents,
-                  icon: const Icon(Icons.clear),
-                  label: const Text('清空日志'),
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 16),
-            
             // 全局动作按钮
-            const Text(
-              '全局动作:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () => _performGlobalAction(GlobalAction.globalActionBack),
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('返回'),
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '全局动作',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () => _performGlobalAction(GlobalAction.globalActionBack),
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text('返回'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => _performGlobalAction(GlobalAction.globalActionHome),
+                          icon: const Icon(Icons.home),
+                          label: const Text('主页'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => _performGlobalAction(GlobalAction.globalActionRecents),
+                          icon: const Icon(Icons.recent_actors),
+                          label: const Text('最近'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => _performGlobalAction(GlobalAction.globalActionTakeScreenshot),
+                          icon: const Icon(Icons.screenshot),
+                          label: const Text('截图'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _showOverlay,
+                          icon: const Icon(Icons.picture_in_picture),
+                          label: const Text('显示浮层'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _hideOverlay,
+                          icon: const Icon(Icons.picture_in_picture_alt),
+                          label: const Text('隐藏浮层'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                ElevatedButton.icon(
-                  onPressed: () => _performGlobalAction(GlobalAction.globalActionHome),
-                  icon: const Icon(Icons.home),
-                  label: const Text('主页'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => _performGlobalAction(GlobalAction.globalActionRecents),
-                  icon: const Icon(Icons.recent_actors),
-                  label: const Text('最近'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => _performGlobalAction(GlobalAction.globalActionTakeScreenshot),
-                  icon: const Icon(Icons.screenshot),
-                  label: const Text('截图'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: _showOverlay,
-                  icon: const Icon(Icons.picture_in_picture),
-                  label: const Text('显示浮层'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: _hideOverlay,
-                  icon: const Icon(Icons.picture_in_picture_alt),
-                  label: const Text('隐藏浮层'),
-                ),
-              ],
+              ),
             ),
             
             const SizedBox(height: 16),
             
             // 事件列表
-            const Text(
-              '无障碍事件日志:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
             Expanded(
-              child: Card(
-                child: _events.isEmpty
-                    ? const Center(
-                        child: Text(
-                          '暂无事件\n开始监听后将显示无障碍事件',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: _events.length,
-                        itemBuilder: (context, index) {
-                          final event = _events[index];
-                          return ListTile(
-                            dense: true,
-                            leading: Icon(
-                              _getEventIcon(event.eventType),
-                              size: 20,
-                              color: Colors.deepPurple,
-                            ),
-                            title: Text(
-                              event.packageName ?? '未知应用',
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '事件: ${event.eventType?.toString().split('.').last ?? "未知"}',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                if (event.text?.isNotEmpty == true)
-                                  Text(
-                                    '文本: ${event.text}',
-                                    style: const TextStyle(fontSize: 12),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                              ],
-                            ),
-                            trailing: Text(
-                              '${event.eventTime?.hour.toString().padLeft(2, '0')}:${event.eventTime?.minute.toString().padLeft(2, '0')}:${event.eventTime?.second.toString().padLeft(2, '0')}',
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
-                          );
-                        },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.event_note, color: Colors.deepPurple),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '无障碍事件日志',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
+                      const Spacer(),
+                      if (_events.isNotEmpty)
+                        Chip(
+                          label: Text('${_events.length}'),
+                          backgroundColor: Colors.deepPurple.withOpacity(0.1),
+                          labelStyle: const TextStyle(color: Colors.deepPurple),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Card(
+                      elevation: 2,
+                      child: _events.isEmpty
+                          ? const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.event_busy,
+                                    size: 48,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    '暂无事件',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    '开始监听后将显示无障碍事件',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: _events.length,
+                              itemBuilder: (context, index) {
+                                final event = _events[index];
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  child: ListTile(
+                                    dense: true,
+                                    leading: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: Colors.deepPurple.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Icon(
+                                        _getEventIcon(event.eventType),
+                                        size: 20,
+                                        color: Colors.deepPurple,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      event.packageName ?? '未知应用',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '事件: ${event.eventType?.toString().split('.').last ?? "未知"}',
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                        if (event.text?.isNotEmpty == true)
+                                          Text(
+                                            '文本: ${event.text}',
+                                            style: const TextStyle(fontSize: 12),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                      ],
+                                    ),
+                                    trailing: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade200,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '${event.eventTime?.hour.toString().padLeft(2, '0')}:${event.eventTime?.minute.toString().padLeft(2, '0')}:${event.eventTime?.second.toString().padLeft(2, '0')}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

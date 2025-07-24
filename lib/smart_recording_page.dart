@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'utils/accessibility_permission_manager.dart';
 
 class SmartRecordingPage extends StatefulWidget {
   const SmartRecordingPage({super.key});
@@ -137,6 +138,17 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
   }
 
   Future<void> _startRecording() async {
+    // 先检查无障碍权限
+    final hasPermission = await AccessibilityPermissionManager.checkAndRequestPermission(
+      context,
+      feature: '智能录制',
+    );
+    
+    if (!hasPermission) {
+      _showSnackBar('需要无障碍权限才能开始录制', Colors.red);
+      return;
+    }
+
     if (!_isServiceEnabled) {
       _showSnackBar('请先开启智能录制服务', Colors.orange);
       return;
@@ -252,6 +264,17 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
   }
 
   Future<void> _executeRecording(String filename) async {
+    // 先检查无障碍权限
+    final hasPermission = await AccessibilityPermissionManager.checkAndRequestPermission(
+      context,
+      feature: '录制回放',
+    );
+    
+    if (!hasPermission) {
+      _showSnackBar('需要无障碍权限才能执行录制回放', Colors.red);
+      return;
+    }
+
     try {
       await smartRecordingChannel.invokeMethod('executeRecording', {'filename': filename});
       _showSnackBar('开始执行录制: $filename', Colors.blue);

@@ -15,98 +15,110 @@ class HomePage extends StatelessWidget {
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.smart_toy,
-              size: 80,
-              color: Colors.deepPurple,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              '智问X',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // 头部区域
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                child: const Column(
+                  children: [
+                    Icon(
+                      Icons.smart_toy,
+                      size: 80,
+                      color: Colors.deepPurple,
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      '智问X',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      '测试DEMO',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // 功能卡片列表
+              _buildFeatureCard(
+                context,
+                title: '语音助手',
+                subtitle: '语音识别 + 语音合成一体化体验',
+                icon: Icons.assistant,
                 color: Colors.deepPurple,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const VoiceAssistantPage()),
+                  );
+                },
               ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              '测试DEMO',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+              
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: 'AI 对话',
+                subtitle: '与大模型进行智能对话',
+                icon: Icons.chat_bubble_outline,
+                color: Colors.blue,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ChatPage()),
+                  );
+                },
               ),
-            ),
-            const SizedBox(height: 40),
-            
-            // 功能卡片
-            _buildFeatureCard(
-              context,
-              title: '语音助手',
-              subtitle: '语音识别 + 语音合成一体化体验',
-              icon: Icons.assistant,
-              color: Colors.deepPurple,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const VoiceAssistantPage()),
-                );
-              },
-            ),
-            
-            const SizedBox(height: 16),
-            
-            _buildFeatureCard(
-              context,
-              title: 'AI 对话',
-              subtitle: '与大模型进行智能对话',
-              icon: Icons.chat_bubble_outline,
-              color: Colors.blue,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ChatPage()),
-                );
-              },
-            ),
-            
-            const SizedBox(height: 16),
-            
-            _buildFeatureCard(
-              context,
-              title: '智能录制',
-              subtitle: '真实操作录制与跨设备回放',
-              icon: Icons.smart_display,
-              color: Colors.green,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SmartRecordingPage()),
-                );
-              },
-            ),
-            
-            const SizedBox(height: 16),
-            
-            _buildFeatureCard(
-              context,
-              title: '自动化规则',
-              subtitle: 'JSON配置驱动的应用自动化操作',
-              icon: Icons.rule,
-              color: Colors.orange,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AutomationRulePage()),
-                );
-              },
-            ),
-          ],
+              
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: '智能录制',
+                subtitle: '真实操作录制与跨设备回放',
+                icon: Icons.smart_display,
+                color: Colors.green,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SmartRecordingPage()),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: '自动化规则',
+                subtitle: 'JSON配置驱动的应用自动化操作',
+                icon: Icons.rule,
+                color: Colors.orange,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AutomationRulePage()),
+                  );
+                },
+              ),
+              
+              // 底部留白，确保最后一个卡片不会贴底
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );
