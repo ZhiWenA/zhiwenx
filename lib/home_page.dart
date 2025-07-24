@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'chat_page.dart';
-import 'action_recording_page.dart';
+import 'smart_recording_page.dart';
 import 'voice_assistant_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -78,14 +78,14 @@ class HomePage extends StatelessWidget {
             
             _buildFeatureCard(
               context,
-              title: '智能辅助控制台',
-              subtitle: '操作录制、回放与无障碍服务',
-              icon: Icons.accessibility_new,
-              color: Colors.orange,
+              title: '智能录制',
+              subtitle: '真实操作录制与跨设备回放',
+              icon: Icons.smart_display,
+              color: Colors.green,
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ActionRecordingPage()),
+                  MaterialPageRoute(builder: (context) => const SmartRecordingPage()),
                 );
               },
             ),
