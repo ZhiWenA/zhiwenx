@@ -41,6 +41,9 @@ dependencies:
   # ASR Plugin for real-time speech recognition
   asr_plugin:
     path: ./sdk/asr_plugin
+  
+  # Flutter Accessibility Service for Android automation
+  flutter_accessibility_service: ^1.0.0
 
 dev_dependencies:
   flutter_test:

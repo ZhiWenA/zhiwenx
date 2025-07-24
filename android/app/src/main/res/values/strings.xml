@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">智问X</string>
+    <string name="accessibility_service_description">智问X无障碍服务，用于辅助用户通过语音控制手机操作</string>
+</resources>

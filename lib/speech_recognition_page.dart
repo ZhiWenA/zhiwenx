@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:asr_plugin/asr_plugin.dart';
 import 'dart:developer';
 import 'tencent_cloud_config.dart';
+import 'accessibility_assistant_page.dart';
+import 'voice_controlled_accessibility_page.dart';
 
 class SpeechRecognitionPage extends StatefulWidget {
   const SpeechRecognitionPage({super.key});
@@ -170,6 +172,30 @@ class _SpeechRecognitionPageState extends State<SpeechRecognitionPage> {
         title: const Text('实时语音识别DEMO'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.voice_chat),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const VoiceControlledAccessibilityPage(),
+                ),
+              );
+            },
+            tooltip: '语音控制助手',
+          ),
+          IconButton(
+            icon: const Icon(Icons.accessibility),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AccessibilityAssistantPage(),
+                ),
+              );
+            },
+            tooltip: '无障碍助手',
+          ),
           IconButton(
             icon: const Icon(Icons.clear),
             onPressed: _clearResult,
