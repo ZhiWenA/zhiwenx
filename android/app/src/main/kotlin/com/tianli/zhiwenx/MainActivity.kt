@@ -18,6 +18,7 @@ class MainActivity : FlutterActivity() {
     private val ACTION_RECORDING_CHANNEL = "com.tianli.zhiwenx/action_recording"
     private val FLOATING_WINDOW_EVENT_CHANNEL = "com.tianli.zhiwenx/floating_window_events"
     private val ACTION_RECORDING_EVENT_CHANNEL = "com.tianli.zhiwenx/action_recording_events"
+    private val AUTOMATION_ENGINE_CHANNEL = "com.tianli.zhiwenx/automation_engine"
     
     private val OVERLAY_PERMISSION_REQUEST_CODE = 1001
     
@@ -218,6 +219,45 @@ class MainActivity : FlutterActivity() {
                 SmartAccessibilityService.eventSink = null
             }
         })
+        
+        // 自动化引擎方法通道
+        val automationEngineMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AUTOMATION_ENGINE_CHANNEL)
+        automationEngineMethodChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "executeRule" -> {
+                    val ruleJson = call.argument<Map<String, Any>>("rule")
+                    if (ruleJson != null) {
+                        SmartAccessibilityService.instance?.executeAutomationRule(ruleJson)
+                        result.success(true)
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Rule is required", null)
+                    }
+                }
+                "validateRule" -> {
+                    val ruleJson = call.argument<Map<String, Any>>("rule")
+                    if (ruleJson != null) {
+                        val isValid = SmartAccessibilityService.instance?.validateAutomationRule(ruleJson) ?: false
+                        result.success(isValid)
+                    } else {
+                        result.success(false)
+                    }
+                }
+                "getScreenWidgets" -> {
+                    val widgets = SmartAccessibilityService.instance?.getScreenWidgets() ?: emptyList()
+                    result.success(widgets)
+                }
+                "findWidget" -> {
+                    val selectorJson = call.argument<Map<String, Any>>("selector")
+                    if (selectorJson != null) {
+                        val widget = SmartAccessibilityService.instance?.findWidget(selectorJson)
+                        result.success(widget)
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Selector is required", null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
         
         // 存储通道引用
         FloatingWindowService.methodChannel = floatingWindowMethodChannel

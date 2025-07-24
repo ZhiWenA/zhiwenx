@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'chat_page.dart';
 import 'smart_recording_page.dart';
 import 'voice_assistant_page.dart';
+import 'automation_rule_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -86,6 +87,22 @@ class HomePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const SmartRecordingPage()),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 16),
+            
+            _buildFeatureCard(
+              context,
+              title: '自动化规则',
+              subtitle: 'JSON配置驱动的应用自动化操作',
+              icon: Icons.rule,
+              color: Colors.orange,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AutomationRulePage()),
                 );
               },
             ),

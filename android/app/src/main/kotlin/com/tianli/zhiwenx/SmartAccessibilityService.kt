@@ -10,6 +10,7 @@ import android.graphics.Path
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.os.Build
+import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.*
@@ -959,5 +960,364 @@ class SmartAccessibilityService : AccessibilityService() {
             "excludeOwnApp" to isExcludeOwnApp,
             "excludedPackages" to excludedPackages.toList()
         )
+    }
+    
+    // ========== 自动化引擎方法 ==========
+    
+    fun executeAutomationRule(ruleJson: Map<String, Any>) {
+        try {
+            val steps = ruleJson["steps"] as? List<Map<String, Any>> ?: return
+            val ruleName = ruleJson["name"] as? String ?: "未知规则"
+            
+            Log.d(TAG, "开始执行自动化规则: $ruleName")
+            
+            // 发送开始执行事件
+            val startData = mapOf(
+                "action" to "automation_started",
+                "ruleName" to ruleName,
+                "stepsCount" to steps.size
+            )
+            eventSink?.success(startData)
+            
+            // 在后台执行规则
+            CoroutineScope(Dispatchers.Main).launch {
+                executeAutomationSteps(steps, ruleName)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "执行自动化规则失败", e)
+            val errorData = mapOf(
+                "action" to "automation_error",
+                "error" to e.message
+            )
+            eventSink?.success(errorData)
+        }
+    }
+    
+    private suspend fun executeAutomationSteps(steps: List<Map<String, Any>>, ruleName: String) {
+        try {
+            for ((index, step) in steps.withIndex()) {
+                val stepType = step["type"] as? String ?: continue
+                val description = step["description"] as? String ?: ""
+                val timeout = (step["timeout"] as? Number)?.toLong() ?: 5000L
+                
+                Log.d(TAG, "执行步骤 ${index + 1}: $stepType - $description")
+                
+                // 发送步骤开始事件
+                val stepData = mapOf(
+                    "action" to "automation_step",
+                    "stepIndex" to index,
+                    "stepType" to stepType,
+                    "description" to description
+                )
+                eventSink?.success(stepData)
+                
+                when (stepType) {
+                    "launchApp" -> {
+                        val packageName = step["appPackage"] as? String
+                        if (packageName != null) {
+                            launchApp(packageName)
+                            delay(timeout)
+                        }
+                    }
+                    "waitForElement" -> {
+                        val selector = step["selector"] as? Map<String, Any>
+                        if (selector != null) {
+                            waitForElement(selector, timeout)
+                        }
+                    }
+                    "click" -> {
+                        val selector = step["selector"] as? Map<String, Any>
+                        if (selector != null) {
+                            val node = findElementBySelector(selector)
+                            if (node != null) {
+                                clickNode(node)
+                                delay(1000)
+                            }
+                        }
+                    }
+                    "input" -> {
+                        val text = step["inputText"] as? String
+                        if (text != null) {
+                            inputText(text)
+                            delay(1000)
+                        }
+                    }
+                    "keyEvent" -> {
+                        val keyCode = (step["keyCode"] as? Number)?.toInt()
+                        if (keyCode != null) {
+                            performKeyEvent(keyCode)
+                            delay(500)
+                        }
+                    }
+                    "sleep" -> {
+                        delay(timeout)
+                    }
+                }
+            }
+            
+            // 发送完成事件
+            val completeData = mapOf(
+                "action" to "automation_completed",
+                "ruleName" to ruleName
+            )
+            eventSink?.success(completeData)
+            
+            Log.d(TAG, "自动化规则执行完成: $ruleName")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "执行自动化步骤失败", e)
+            val errorData = mapOf(
+                "action" to "automation_error",
+                "error" to e.message
+            )
+            eventSink?.success(errorData)
+        }
+    }
+    
+    fun validateAutomationRule(ruleJson: Map<String, Any>): Boolean {
+        return try {
+            val steps = ruleJson["steps"] as? List<Map<String, Any>> ?: return false
+            
+            // 检查是否有app_launch步骤，并验证包名
+            for (step in steps) {
+                val stepType = step["type"] as? String
+                if (stepType == "launchApp") {
+                    val packageName = step["appPackage"] as? String ?: return false
+                    return isAppInstalled(packageName)
+                }
+            }
+            
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "验证自动化规则失败", e)
+            false
+        }
+    }
+    
+    fun getScreenWidgets(): List<Map<String, Any>> {
+        return try {
+            val rootNode = rootInActiveWindow
+            val widgets = mutableListOf<Map<String, Any>>()
+            extractWidgetInfo(rootNode, widgets)
+            widgets
+        } catch (e: Exception) {
+            Log.e(TAG, "获取屏幕控件失败", e)
+            emptyList()
+        }
+    }
+    
+    fun findWidget(selectorJson: Map<String, Any>): Map<String, Any>? {
+        return try {
+            val node = findElementBySelector(selectorJson)
+            if (node != null) {
+                convertNodeToMap(node)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "查找控件失败", e)
+            null
+        }
+    }
+    
+    private fun extractWidgetInfo(node: AccessibilityNodeInfo?, widgets: MutableList<Map<String, Any>>) {
+        if (node == null) return
+        
+        val widget = convertNodeToMap(node)
+        widgets.add(widget)
+        
+        // 递归处理子节点（限制深度避免过多数据）
+        if (widgets.size < 100) {
+            for (i in 0 until node.childCount) {
+                extractWidgetInfo(node.getChild(i), widgets)
+            }
+        }
+    }
+    
+    private fun convertNodeToMap(node: AccessibilityNodeInfo): Map<String, Any> {
+        val bounds = android.graphics.Rect()
+        node.getBoundsInScreen(bounds)
+        
+        return mapOf(
+            "className" to (node.className?.toString() ?: ""),
+            "text" to (node.text?.toString() ?: ""),
+            "contentDescription" to (node.contentDescription?.toString() ?: ""),
+            "resourceId" to if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                node.viewIdResourceName ?: ""
+            } else {
+                ""
+            },
+            "packageName" to (node.packageName?.toString() ?: ""),
+            "isClickable" to node.isClickable,
+            "isEnabled" to node.isEnabled,
+            "isSelected" to node.isSelected,
+            "isCheckable" to node.isCheckable,
+            "isChecked" to node.isChecked,
+            "isFocusable" to node.isFocusable,
+            "isFocused" to node.isFocused,
+            "isScrollable" to node.isScrollable,
+            "isLongClickable" to node.isLongClickable,
+            "isPassword" to node.isPassword,
+            "bounds" to mapOf(
+                "left" to bounds.left,
+                "top" to bounds.top,
+                "right" to bounds.right,
+                "bottom" to bounds.bottom
+            )
+        )
+    }
+    
+    private suspend fun waitForElement(selector: Map<String, Any>, timeout: Long) {
+        val startTime = System.currentTimeMillis()
+        while (System.currentTimeMillis() - startTime < timeout) {
+            val node = findElementBySelector(selector)
+            if (node != null) {
+                return
+            }
+            delay(500)
+        }
+        Log.w(TAG, "等待元素超时: $selector")
+    }
+    
+    private fun findElementBySelector(selector: Map<String, Any>): AccessibilityNodeInfo? {
+        val rootNode = rootInActiveWindow ?: return null
+        return findElementRecursive(rootNode, selector)
+    }
+    
+    private fun findElementRecursive(node: AccessibilityNodeInfo?, selector: Map<String, Any>): AccessibilityNodeInfo? {
+        if (node == null) return null
+        
+        // 检查当前节点是否匹配
+        if (matchesSelector(node, selector)) {
+            return node
+        }
+        
+        // 递归检查子节点
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            val result = findElementRecursive(child, selector)
+            if (result != null) {
+                return result
+            }
+        }
+        
+        return null
+    }
+    
+    private fun matchesSelector(node: AccessibilityNodeInfo, selector: Map<String, Any>): Boolean {
+        // 按资源ID匹配
+        val byResourceId = selector["byResourceId"] as? String
+        if (byResourceId != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if (node.viewIdResourceName != byResourceId) return false
+        }
+        
+        // 按文本匹配
+        val byText = selector["byText"] as? String
+        if (byText != null) {
+            if (node.text?.toString() != byText) return false
+        }
+        
+        // 按内容描述匹配
+        val byContentDescription = selector["byContentDescription"] as? String
+        if (byContentDescription != null) {
+            if (node.contentDescription?.toString() != byContentDescription) return false
+        }
+        
+        // 按类名匹配
+        val byClassName = selector["byClassName"] as? String
+        if (byClassName != null) {
+            if (node.className?.toString() != byClassName) return false
+        }
+        
+        // 按可点击性匹配
+        val isClickable = selector["isClickable"] as? Boolean
+        if (isClickable != null) {
+            if (node.isClickable != isClickable) return false
+        }
+        
+        return true
+    }
+    
+    private fun clickNode(node: AccessibilityNodeInfo) {
+        if (node.isClickable) {
+            node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+        } else {
+            // 如果节点不可点击，尝试点击其坐标
+            val bounds = android.graphics.Rect()
+            node.getBoundsInScreen(bounds)
+            val centerX = bounds.centerX()
+            val centerY = bounds.centerY()
+            performClick(centerX, centerY)
+        }
+    }
+    
+    private fun inputText(text: String) {
+        // 查找当前聚焦的输入框
+        val rootNode = rootInActiveWindow
+        val editableNode = findEditableNode(rootNode)
+        
+        if (editableNode != null) {
+            // 先清空现有文本
+            val selectionBundle = Bundle()
+            selectionBundle.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
+            selectionBundle.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, 
+                editableNode.text?.length ?: 0)
+            editableNode.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectionBundle)
+            
+            // 输入新文本
+            val textBundle = Bundle()
+            textBundle.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+            editableNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, textBundle)
+        }
+    }
+    
+    private fun performKeyEvent(keyCode: Int) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // 对于回车键，尝试执行搜索相关的动作
+            if (keyCode == 66) { // KEYCODE_ENTER
+                val rootNode = rootInActiveWindow
+                val editableNode = findEditableNode(rootNode)
+                
+                if (editableNode != null) {
+                    // 尝试基本的点击动作来触发搜索
+                    try {
+                        // 查找搜索按钮或类似的元素
+                        val searchButton = findSearchButton(rootNode)
+                        if (searchButton != null) {
+                            searchButton.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        } else {
+                            // 如果找不到搜索按钮，尝试点击输入框来触发搜索
+                            editableNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "执行按键事件失败", e)
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun findSearchButton(rootNode: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+        if (rootNode == null) return null
+        
+        // 查找包含"搜索"、"search"等文本的按钮
+        return findElementRecursive(rootNode, mapOf(
+            "byText" to "搜索"
+        )) ?: findElementRecursive(rootNode, mapOf(
+            "byText" to "Search"
+        )) ?: findElementRecursive(rootNode, mapOf(
+            "byContentDescription" to "搜索"
+        )) ?: findElementRecursive(rootNode, mapOf(
+            "byContentDescription" to "Search"
+        ))
+    }
+    
+    private fun isAppInstalled(packageName: String): Boolean {
+        return try {
+            packageManager.getPackageInfo(packageName, 0)
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 }
