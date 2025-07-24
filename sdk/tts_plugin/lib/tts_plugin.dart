@@ -48,6 +48,8 @@ class TTSController {
   final MethodChannel _methodChannel = const MethodChannel('tts_plugin');
   final StreamController<TTSData> _streamCtl =
       StreamController<TTSData>.broadcast();
+  final StreamController<String> _playerEventCtl =
+      StreamController<String>.broadcast();
 
   set config(TTSControllerConfig config) {
     _methodChannel.invokeMethod("TTSController.config", config.toMap());
@@ -55,6 +57,10 @@ class TTSController {
 
   Stream<TTSData> get listener {
     return _streamCtl.stream;
+  }
+
+  Stream<String> get playerEventListener {
+    return _playerEventCtl.stream;
   }
 
   static TTSController instance = TTSController();
@@ -76,6 +82,13 @@ class TTSController {
           ttsError.serverMessage = info['serverMessage'];
         }
         _streamCtl.addError(ttsError);
+      } else if (call.method == "onPlayerPlayStart") {
+        _playerEventCtl.add("playStart");
+      } else if (call.method == "onPlayerPlayComplete") {
+        _playerEventCtl.add("playComplete");
+      } else if (call.method == "onPlayerPlayError") {
+        var error = "播放错误: ${call.arguments["message"]}";
+        _playerEventCtl.addError(error);
       }
     });
   }
@@ -120,5 +133,26 @@ class TTSController {
    */
   release() async {
     await _methodChannel.invokeMethod("TTSController.release");
+  }
+
+  /**
+   * 停止音频播放
+   */
+  stopPlayback() async {
+    await _methodChannel.invokeMethod("TTSController.stopPlayback");
+  }
+
+  /**
+   * 暂停音频播放
+   */
+  pausePlayback() async {
+    await _methodChannel.invokeMethod("TTSController.pausePlayback");
+  }
+
+  /**
+   * 恢复音频播放
+   */
+  resumePlayback() async {
+    await _methodChannel.invokeMethod("TTSController.resumePlayback");
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'speech_recognition_page.dart';
 import 'chat_page.dart';
 import 'action_recording_page.dart';
+import 'voice_assistant_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -46,14 +46,14 @@ class HomePage extends StatelessWidget {
             // 功能卡片
             _buildFeatureCard(
               context,
-              title: 'AI 对话',
-              subtitle: '与大模型进行智能对话',
-              icon: Icons.chat_bubble_outline,
-              color: Colors.blue,
+              title: '语音助手',
+              subtitle: '语音识别 + 语音合成一体化体验',
+              icon: Icons.assistant,
+              color: Colors.deepPurple,
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ChatPage()),
+                  MaterialPageRoute(builder: (context) => const VoiceAssistantPage()),
                 );
               },
             ),
@@ -62,14 +62,14 @@ class HomePage extends StatelessWidget {
             
             _buildFeatureCard(
               context,
-              title: '语音识别',
-              subtitle: '实时语音识别与辅助功能',
-              icon: Icons.mic,
-              color: Colors.green,
+              title: 'AI 对话',
+              subtitle: '与大模型进行智能对话',
+              icon: Icons.chat_bubble_outline,
+              color: Colors.blue,
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SpeechRecognitionPage()),
+                  MaterialPageRoute(builder: (context) => const ChatPage()),
                 );
               },
             ),

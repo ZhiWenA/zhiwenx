@@ -8,12 +8,13 @@
 
 #import "TtsPlugin.h"
 #import "QCloudTTS/QCloudTTSEngine.h"
+#import "QCloudTTS/QCloudMediaPlayer.h"
 
 /**
   将OC中消息回调到Flutter
  */
-@interface TTSObserver : NSObject <QCloudTTSEngineDelegate>
-
+@interface TTSObserver : NSObject <QCloudTTSEngineDelegate, QCloudPlayerDelegate>
+@property (nonatomic, strong) QCloudMediaPlayer *mediaPlayer;
 @end
 
 @implementation TTSObserver
@@ -22,10 +23,15 @@ FlutterMethodChannel *_channel;
 
 - (instancetype)init:(FlutterMethodChannel *)channel {
   _channel = channel;
+  self.mediaPlayer = [[QCloudMediaPlayer alloc] init];
+  self.mediaPlayer.playerDelegate = self;
   return self;
 }
 
 - (void)onSynthesizeData:(NSData *)data UtteranceId:(NSString *)utteranceId Text:(NSString *)text EngineType:(NSInteger)type RequestId:(NSString *)requestId RespJson:(NSString *)respJson {
+    // 直接播放音频数据
+    [self.mediaPlayer playData:data];
+    
     dispatch_async(dispatch_get_main_queue(), ^{
       NSDictionary *args = @{
         @"data" : [FlutterStandardTypedData typedDataWithBytes:data],
@@ -50,6 +56,29 @@ FlutterMethodChannel *_channel;
 }
 
 - (void)onOfflineAuthInfo:(QCloudOfflineAuthInfo *_Nonnull)offlineAuthInfo {
+}
+
+// QCloudPlayerDelegate 回调方法
+- (void)onPlayerPlayStart {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [_channel invokeMethod:@"onPlayerPlayStart" arguments:nil];
+    });
+}
+
+- (void)onPlayerPlayComplete {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [_channel invokeMethod:@"onPlayerPlayComplete" arguments:nil];
+    });
+}
+
+- (void)onPlayerPlayError:(int)errCode errMsg:(NSString *)errMsg {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSDictionary *args = @{
+            @"code": @(errCode),
+            @"message": errMsg
+        };
+        [_channel invokeMethod:@"onPlayerPlayError" arguments:args];
+    });
 }
 
 @end
@@ -117,6 +146,18 @@ id<QCloudTTSEngineDelegate> _delegate;
     NSString *key = call.arguments[@"key"];
     NSObject *value = call.arguments[@"value"];
     [[QCloudTTSEngine getShareInstance] setOnlineParam:key value:value];
+    result(nil);
+  } else if ([@"TTSController.stopPlayback" isEqualToString:call.method]) {
+    TTSObserver *observer = (TTSObserver *)_delegate;
+    [observer.mediaPlayer stop];
+    result(nil);
+  } else if ([@"TTSController.pausePlayback" isEqualToString:call.method]) {
+    TTSObserver *observer = (TTSObserver *)_delegate;
+    [observer.mediaPlayer pause];
+    result(nil);
+  } else if ([@"TTSController.resumePlayback" isEqualToString:call.method]) {
+    TTSObserver *observer = (TTSObserver *)_delegate;
+    [observer.mediaPlayer resume];
     result(nil);
   } else {
     result(FlutterMethodNotImplemented);

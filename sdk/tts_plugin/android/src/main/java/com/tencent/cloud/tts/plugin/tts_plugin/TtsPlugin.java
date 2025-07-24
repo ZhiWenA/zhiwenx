@@ -1,6 +1,11 @@
 package com.tencent.cloud.tts.plugin.tts_plugin;
 
 import android.app.Activity;
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.media.MediaPlayer;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -12,6 +17,10 @@ import com.tencent.cloud.libqcloudtts.TtsMode;
 import com.tencent.cloud.libqcloudtts.TtsResultListener;
 import com.tencent.cloud.libqcloudtts.engine.offlineModule.auth.QCloudOfflineAuthInfo;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -34,6 +43,7 @@ public class TtsPlugin implements FlutterPlugin, MethodCallHandler, ActivityAwar
   private MethodChannel channel;
   private Activity activity;
   private boolean isFlutterEngineAttached = true;
+  private MediaPlayer mediaPlayer;
 
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   @Override
@@ -79,6 +89,9 @@ public class TtsPlugin implements FlutterPlugin, MethodCallHandler, ActivityAwar
 
         @Override
         public void onSynthesizeData(byte[] bytes, String utteranceId, String text, int engineType, String requestId, String respJson) {
+          // 直接播放音频数据
+          playAudioData(bytes);
+          
           new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
@@ -155,6 +168,18 @@ public class TtsPlugin implements FlutterPlugin, MethodCallHandler, ActivityAwar
       }
       result.success(null);
     }
+    else if (call.method.equals("TTSController.stopPlayback")) {
+      stopPlayback();
+      result.success(null);
+    }
+    else if (call.method.equals("TTSController.pausePlayback")) {
+      pausePlayback();
+      result.success(null);
+    }
+    else if (call.method.equals("TTSController.resumePlayback")) {
+      resumePlayback();
+      result.success(null);
+    }
     else {
       result.notImplemented();
     }
@@ -168,10 +193,92 @@ public class TtsPlugin implements FlutterPlugin, MethodCallHandler, ActivityAwar
     }
   }
 
+  private void playAudioData(byte[] audioData) {
+    try {
+      // 停止当前播放
+      if (mediaPlayer != null) {
+        mediaPlayer.release();
+        mediaPlayer = null;
+      }
+
+      // 创建临时文件
+      File tempFile = File.createTempFile("tts_audio", ".mp3", activity.getCacheDir());
+      FileOutputStream fos = new FileOutputStream(tempFile);
+      fos.write(audioData);
+      fos.close();
+
+      // 使用MediaPlayer播放
+      mediaPlayer = new MediaPlayer();
+      mediaPlayer.setDataSource(tempFile.getAbsolutePath());
+      mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+      
+      mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+        @Override
+        public void onPrepared(MediaPlayer mp) {
+          mp.start();
+          sendMessage("onPlayerPlayStart", null);
+        }
+      });
+      
+      mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+        @Override
+        public void onCompletion(MediaPlayer mp) {
+          sendMessage("onPlayerPlayComplete", null);
+          // 删除临时文件
+          tempFile.delete();
+        }
+      });
+      
+      mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+        @Override
+        public boolean onError(MediaPlayer mp, int what, int extra) {
+          Map<String, Object> args = new HashMap<>();
+          args.put("code", what);
+          args.put("message", "MediaPlayer error: " + what + ", " + extra);
+          sendMessage("onPlayerPlayError", args);
+          tempFile.delete();
+          return true;
+        }
+      });
+      
+      mediaPlayer.prepareAsync();
+      
+    } catch (IOException e) {
+      Map<String, Object> args = new HashMap<>();
+      args.put("code", -1);
+      args.put("message", "Failed to play audio: " + e.getMessage());
+      sendMessage("onPlayerPlayError", args);
+    }
+  }
+
+  private void stopPlayback() {
+    if (mediaPlayer != null) {
+      mediaPlayer.stop();
+      mediaPlayer.release();
+      mediaPlayer = null;
+    }
+  }
+
+  private void pausePlayback() {
+    if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+      mediaPlayer.pause();
+    }
+  }
+
+  private void resumePlayback() {
+    if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+      mediaPlayer.start();
+    }
+  }
+
   @Override
   public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
     channel.setMethodCallHandler(null);
     isFlutterEngineAttached = false;
+    if (mediaPlayer != null) {
+      mediaPlayer.release();
+      mediaPlayer = null;
+    }
   }
 
   @Override
