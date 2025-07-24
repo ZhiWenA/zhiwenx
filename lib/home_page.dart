@@ -78,9 +78,9 @@ class HomePage extends StatelessWidget {
             
             _buildFeatureCard(
               context,
-              title: '操作录制',
-              subtitle: '录制和回放用户操作',
-              icon: Icons.videocam,
+              title: '智能辅助控制台',
+              subtitle: '操作录制、回放与无障碍服务',
+              icon: Icons.accessibility_new,
               color: Colors.orange,
               onTap: () {
                 Navigator.push(
