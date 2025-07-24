@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'speech_recognition_page.dart';
 import 'chat_page.dart';
+import 'action_recording_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -69,6 +70,22 @@ class HomePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const SpeechRecognitionPage()),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 16),
+            
+            _buildFeatureCard(
+              context,
+              title: '操作录制',
+              subtitle: '录制和回放用户操作',
+              icon: Icons.videocam,
+              color: Colors.orange,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ActionRecordingPage()),
                 );
               },
             ),

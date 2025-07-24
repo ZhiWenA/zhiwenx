@@ -1,4 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 悬浮窗权限 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- 录制操作权限 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- 无障碍服务权限 -->
+    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
+    <!-- 网络权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 前台服务权限 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    
     <application
         android:label="zhiwenx"
         android:name="${applicationName}"
@@ -39,6 +53,28 @@
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibilityservice" />
+        </service>
+        
+        <!-- 悬浮窗服务 -->
+        <service 
+            android:name=".FloatingWindowService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="accessibility" />
+        </service>
+        
+        <!-- 操作录制服务 -->
+        <service 
+            android:name=".ActionRecordingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="accessibility" />
         </service>
     </application>
     <!-- Required to query activities that can process text, see:
