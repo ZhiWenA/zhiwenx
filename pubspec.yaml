@@ -50,7 +50,7 @@ dependencies:
   flutter_accessibility_service: ^1.0.0
   
   # HTTP client for API requests
-  http: ^0.13.6
+  http: ^1.4.0
   
   # Path provider for accessing file system
   path_provider: ^2.1.1

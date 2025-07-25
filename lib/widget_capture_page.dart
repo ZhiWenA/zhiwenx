@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'automation_rule_engine.dart';
 import 'utils/accessibility_permission_manager.dart';
-import 'widgets/enhanced_widget_info_card.dart';
 import 'global_widget_capture_page.dart';
 import 'dart:async';
 import 'dart:convert';
