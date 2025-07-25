@@ -125,6 +125,31 @@ class _UrlSchemesMcpTestPageState extends State<UrlSchemesMcpTestPage> {
     }
   }
 
+  Future<void> _testSmartLaunch() async {
+    if (!_isBuiltinConnected) {
+      _addLog('请先连接到内置服务器');
+      return;
+    }
+
+    try {
+      _addLog('测试智能启动: 小红书搜索阿里云');
+      
+      // 模拟 AI 可能发送的错误参数格式
+      final result = await _mcpService.callTool('url_schemes', 'launch_url_scheme', {
+        'scheme_id': 'xiaohongshu',  // 错误的ID，应该被智能修正
+        'parameters': {
+          'action': 'search',       // 错误的参数名，应该被映射为keyword
+          'query': '阿里云'          // 另一个错误的参数名，也应该被映射为keyword
+        }
+      });
+      
+      _addLog('智能启动测试完成');
+      _addLog('结果: $result');
+    } catch (e) {
+      _addLog('智能启动测试失败: $e');
+    }
+  }
+
   Future<void> _startServer() async {
     try {
       _addLog('正在启动 URL Schemes MCP Server...');
@@ -362,6 +387,15 @@ class _UrlSchemesMcpTestPageState extends State<UrlSchemesMcpTestPage> {
                   label: const Text('测试内置服务器'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _isBuiltinConnected ? _testSmartLaunch : null,
+                  icon: const Icon(Icons.smart_toy),
+                  label: const Text('测试智能启动'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
                   ),
                 ),

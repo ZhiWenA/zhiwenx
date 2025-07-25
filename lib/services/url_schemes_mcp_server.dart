@@ -87,18 +87,33 @@ class UrlSchemesMcpServer {
     // 1. 启动 URL Scheme 工具
     _server.addTool(
       name: 'launch_url_scheme',
-      description: 'Launch an app using URL scheme with parameters',
+      description: '''Launch an app using URL scheme. Available schemes:
+- xiaohongshu_search: Search in Little Red Book (小红书) with "keyword" parameter
+- wechat_scan: Open WeChat QR scanner (no parameters)
+- alipay_scan: Open Alipay QR scanner (no parameters) 
+- taobao_search: Search on Taobao with "keyword" parameter
+- douyin_search: Search on TikTok with "keyword" parameter
+- bilibili_search: Search on Bilibili with "keyword" parameter
+- amap_navigation: Navigate with Amap using "poiname", "lat", "lon" parameters
+
+For search functions, use the "keyword" parameter to specify what to search for.''',
       inputSchema: {
         'type': 'object',
         'properties': {
           'scheme_id': {
             'type': 'string',
-            'description': 'The ID of the URL scheme to launch'
+            'description': 'The ID of the URL scheme to launch. Use exact IDs like "xiaohongshu_search", "wechat_scan", etc.',
+            'enum': ['xiaohongshu_search', 'wechat_scan', 'alipay_scan', 'taobao_search', 'douyin_search', 'bilibili_search', 'amap_navigation']
           },
           'parameters': {
             'type': 'object',
-            'description': 'Parameters to pass to the URL scheme',
-            'additionalProperties': true
+            'description': 'Parameters for the URL scheme. For search schemes, use {"keyword": "search_term"}',
+            'additionalProperties': true,
+            'examples': [
+              {'keyword': '阿里云'},
+              {'keyword': 'Flutter开发'},
+              {'poiname': '北京站', 'lat': 39.9042, 'lon': 116.4074}
+            ]
           }
         },
         'required': ['scheme_id']
@@ -433,15 +448,82 @@ Provide step-by-step guidance and ensure all configurations are valid and secure
       final schemeId = args['scheme_id'] as String;
       final parameters = args['parameters'] as Map<String, dynamic>? ?? {};
 
-      final success = await _urlSchemesService.launchUrlScheme(schemeId, parameters);
+      // 先尝试直接匹配 scheme_id
+      var targetScheme = _urlSchemesService.config?.findSchemeById(schemeId);
+      
+      // 如果找不到，尝试智能匹配
+      if (targetScheme == null) {
+        final allSchemes = _urlSchemesService.getAllSchemes();
+        
+        // 尝试通过名称模糊匹配
+        for (final scheme in allSchemes) {
+          if (scheme.name.toLowerCase().contains(schemeId.toLowerCase()) ||
+              scheme.id.toLowerCase().contains(schemeId.toLowerCase()) ||
+              scheme.scheme.toLowerCase().contains(schemeId.toLowerCase())) {
+            targetScheme = scheme;
+            break;
+          }
+        }
+        
+        // 如果还是找不到，尝试根据参数推断
+        if (targetScheme == null && parameters.isNotEmpty) {
+          final paramKeys = parameters.keys.toSet();
+          
+          for (final scheme in allSchemes) {
+            final schemeParamKeys = scheme.parameters.keys.toSet();
+            
+            // 如果参数匹配度较高，选择这个 scheme
+            if (paramKeys.intersection(schemeParamKeys).isNotEmpty) {
+              targetScheme = scheme;
+              break;
+            }
+          }
+        }
+      }
+
+      if (targetScheme == null) {
+        // 如果仍然找不到，返回可用的 schemes 列表
+        final allSchemes = _urlSchemesService.getAllSchemes();
+        final availableSchemes = allSchemes.map((s) => {
+          'id': s.id,
+          'name': s.name,
+          'description': s.description,
+          'parameters': s.parameters.keys.toList(),
+        }).toList();
+        
+        return CallToolResult(
+          content: [TextContent(text: 'URL scheme "$schemeId" not found. Available schemes:\n${const JsonEncoder.withIndent('  ').convert(availableSchemes)}')],
+          isError: true,
+        );
+      }
+
+      // 智能参数映射
+      final mappedParameters = <String, dynamic>{};
+      
+      // 直接映射匹配的参数
+      for (final entry in targetScheme.parameters.entries) {
+        final paramName = entry.key;
+        
+        if (parameters.containsKey(paramName)) {
+          mappedParameters[paramName] = parameters[paramName];
+        } else {
+          // 尝试智能映射常见参数
+          final value = _smartMapParameter(paramName, parameters);
+          if (value != null) {
+            mappedParameters[paramName] = value;
+          }
+        }
+      }
+
+      final success = await _urlSchemesService.launchUrlScheme(targetScheme.id, mappedParameters);
       
       if (success) {
         return CallToolResult(
-          content: [TextContent(text: 'Successfully launched URL scheme: $schemeId')],
+          content: [TextContent(text: 'Successfully launched ${targetScheme.name} (${targetScheme.id}) with parameters: ${mappedParameters}')],
         );
       } else {
         return CallToolResult(
-          content: [TextContent(text: 'Failed to launch URL scheme: $schemeId')],
+          content: [TextContent(text: 'Failed to launch URL scheme: ${targetScheme.id}')],
           isError: true,
         );
       }
@@ -451,6 +533,41 @@ Provide step-by-step guidance and ensure all configurations are valid and secure
         isError: true,
       );
     }
+  }
+
+  /// 智能参数映射
+  dynamic _smartMapParameter(String targetParam, Map<String, dynamic> sourceParams) {
+    // 常见参数映射规则
+    final paramMappings = {
+      'keyword': ['query', 'search', 'q', 'term', 'text'],
+      'query': ['keyword', 'search', 'q', 'term', 'text'],
+      'search': ['keyword', 'query', 'q', 'term', 'text'],
+      'text': ['keyword', 'query', 'search', 'q', 'term'],
+      'url': ['link', 'uri', 'address'],
+      'title': ['name', 'subject'],
+      'lat': ['latitude'],
+      'lon': ['longitude', 'lng'],
+      'longitude': ['lon', 'lng'],
+      'latitude': ['lat'],
+    };
+
+    final possibleKeys = paramMappings[targetParam] ?? [];
+    
+    for (final key in possibleKeys) {
+      if (sourceParams.containsKey(key)) {
+        return sourceParams[key];
+      }
+    }
+
+    // 如果找不到直接映射，检查是否有包含目标参数名的键
+    for (final entry in sourceParams.entries) {
+      if (entry.key.toLowerCase().contains(targetParam.toLowerCase()) ||
+          targetParam.toLowerCase().contains(entry.key.toLowerCase())) {
+        return entry.value;
+      }
+    }
+
+    return null;
   }
 
   /// 处理列出 URL Schemes 请求
