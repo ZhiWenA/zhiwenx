@@ -74,6 +74,9 @@ dependencies:
   
   # Package info for getting app version
   package_info_plus: ^8.3.0
+  
+  # Flutter contacts for accessing device contacts
+  flutter_contacts: ^1.1.9+2
 
 dev_dependencies:
   flutter_test:

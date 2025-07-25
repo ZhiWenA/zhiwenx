@@ -7,6 +7,7 @@ import 'global_widget_capture_page.dart';
 import 'global_capture_test_page.dart';
 import 'mcp_config_page.dart';
 import 'mcp_test_page.dart';
+import 'contacts_page.dart';
 
 class DeveloperHomePage extends StatelessWidget {
   const DeveloperHomePage({super.key});
@@ -163,6 +164,22 @@ class DeveloperHomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const McpTestPage()),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: '联系人信息',
+                subtitle: '获取和管理设备联系人信息',
+                icon: Icons.contacts,
+                color: Colors.indigo,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ContactsPage()),
                   );
                 },
               ),

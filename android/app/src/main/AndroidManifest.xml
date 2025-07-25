@@ -18,6 +18,9 @@
     <uses-permission android:name="android.permission.GET_TASKS" />
     <!-- 获取应用使用情况权限 -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+    <!-- 联系人权限 -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
     
     <application
         android:label="zhiwenx"

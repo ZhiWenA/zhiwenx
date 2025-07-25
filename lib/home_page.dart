@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zhiwenx/contacts_page.dart';
 import 'chat_page.dart';
 import 'smart_recording_page.dart';
 import 'voice_assistant_page.dart';
@@ -215,6 +216,22 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const GlobalCaptureTestPage()),
+                  );
+                },
+              ),
+
+                            const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: '联系人信息',
+                subtitle: '获取和管理设备联系人信息',
+                icon: Icons.contacts,
+                color: Colors.indigo,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ContactsPage()),
                   );
                 },
               ),
