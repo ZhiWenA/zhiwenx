@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/url_schemes_mcp_server.dart';
+import '../mcp_service.dart';
+import '../utils/url_schemes_mcp_test.dart';
 
 class UrlSchemesMcpTestPage extends StatefulWidget {
   const UrlSchemesMcpTestPage({super.key});
@@ -11,7 +13,9 @@ class UrlSchemesMcpTestPage extends StatefulWidget {
 
 class _UrlSchemesMcpTestPageState extends State<UrlSchemesMcpTestPage> {
   final UrlSchemesMcpServer _mcpServer = UrlSchemesMcpServer();
+  final McpService _mcpService = McpService();
   bool _isServerRunning = false;
+  bool _isBuiltinConnected = false;
   String _serverStatus = '未启动';
   final List<String> _logs = [];
 
@@ -19,13 +23,106 @@ class _UrlSchemesMcpTestPageState extends State<UrlSchemesMcpTestPage> {
   void initState() {
     super.initState();
     _checkServerStatus();
+    _checkBuiltinConnection();
   }
 
   void _checkServerStatus() {
     setState(() {
       _isServerRunning = _mcpServer.isInitialized;
-      _serverStatus = _isServerRunning ? '运行中' : '未启动';
+      _updateServerStatus();
     });
+  }
+
+  void _checkBuiltinConnection() async {
+    // 检查内置服务器连接状态
+    final statuses = _mcpService.serverStatuses;
+    final urlSchemesStatus = statuses.where((s) => s.serverId == 'url_schemes').firstOrNull;
+    setState(() {
+      _isBuiltinConnected = urlSchemesStatus?.state == McpConnectionState.connected;
+      _updateServerStatus();
+    });
+  }
+
+  void _updateServerStatus() {
+    if (_isBuiltinConnected) {
+      _serverStatus = '内置服务器已连接';
+    } else if (_isServerRunning) {
+      _serverStatus = '独立服务器运行中';
+    } else {
+      _serverStatus = '未启动';
+    }
+  }
+
+  Future<void> _connectToBuiltinServer() async {
+    try {
+      _addLog('正在连接到内置 URL Schemes MCP Server...');
+      
+      // 初始化 MCP 服务
+      await _mcpService.initialize();
+      
+      // 连接到内置 URL Schemes 服务器
+      final success = await _mcpService.connectToServer('url_schemes');
+      
+      if (success) {
+        setState(() {
+          _isBuiltinConnected = true;
+          _updateServerStatus();
+        });
+        _addLog('成功连接到内置 URL Schemes MCP Server');
+        _addLog('现在可以通过 AI 对话调用 URL Schemes 功能');
+      } else {
+        _addLog('连接到内置服务器失败');
+      }
+    } catch (e) {
+      _addLog('连接失败: $e');
+    }
+  }
+
+  Future<void> _disconnectFromBuiltinServer() async {
+    try {
+      _addLog('正在断开内置 URL Schemes MCP Server...');
+      
+      await _mcpService.disconnectFromServer('url_schemes');
+      
+      setState(() {
+        _isBuiltinConnected = false;
+        _updateServerStatus();
+      });
+      
+      _addLog('已断开内置 URL Schemes MCP Server');
+    } catch (e) {
+      _addLog('断开连接失败: $e');
+    }
+  }
+
+  Future<void> _runIntegrationTest() async {
+    try {
+      _addLog('开始运行集成测试...');
+      await UrlSchemesMcpIntegrationTest.runTest();
+      _addLog('集成测试完成，请查看调试输出');
+    } catch (e) {
+      _addLog('集成测试失败: $e');
+    }
+  }
+
+  Future<void> _testBuiltinConnection() async {
+    if (!_isBuiltinConnected) {
+      _addLog('请先连接到内置服务器');
+      return;
+    }
+
+    try {
+      _addLog('测试内置服务器: 获取 URL Schemes 列表');
+      
+      final result = await _mcpService.callTool('url_schemes', 'list_url_schemes', {
+        'enabled_only': true,
+      });
+      
+      _addLog('内置服务器测试成功');
+      _addLog('返回数据: ${result.length > 100 ? result.substring(0, 100) + '...' : result}');
+    } catch (e) {
+      _addLog('内置服务器测试失败: $e');
+    }
   }
 
   Future<void> _startServer() async {
@@ -198,9 +295,9 @@ class _UrlSchemesMcpTestPageState extends State<UrlSchemesMcpTestPage> {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _isServerRunning ? Colors.green.shade50 : Colors.red.shade50,
+              color: (_isBuiltinConnected || _isServerRunning) ? Colors.green.shade50 : Colors.red.shade50,
               border: Border.all(
-                color: _isServerRunning ? Colors.green : Colors.red,
+                color: (_isBuiltinConnected || _isServerRunning) ? Colors.green : Colors.red,
               ),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -210,15 +307,15 @@ class _UrlSchemesMcpTestPageState extends State<UrlSchemesMcpTestPage> {
                 Row(
                   children: [
                     Icon(
-                      _isServerRunning ? Icons.check_circle : Icons.error,
-                      color: _isServerRunning ? Colors.green : Colors.red,
+                      (_isBuiltinConnected || _isServerRunning) ? Icons.check_circle : Icons.error,
+                      color: (_isBuiltinConnected || _isServerRunning) ? Colors.green : Colors.red,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'MCP Server 状态: $_serverStatus',
+                      'URL Schemes MCP 状态: $_serverStatus',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: _isServerRunning ? Colors.green.shade700 : Colors.red.shade700,
+                        color: (_isBuiltinConnected || _isServerRunning) ? Colors.green.shade700 : Colors.red.shade700,
                       ),
                     ),
                   ],
@@ -229,7 +326,10 @@ class _UrlSchemesMcpTestPageState extends State<UrlSchemesMcpTestPage> {
                   '• 启动应用 URL Schemes\n'
                   '• 管理 URL Scheme 配置\n'
                   '• 获取可用 schemes 列表\n'
-                  '• 支持 AI 对话调用',
+                  '• 支持 AI 对话调用\n'
+                  '\n模式说明：\n'
+                  '• 内置服务器：集成到 AI 对话系统，自动可用\n'
+                  '• 独立服务器：可供外部应用连接',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade600,
@@ -246,10 +346,43 @@ class _UrlSchemesMcpTestPageState extends State<UrlSchemesMcpTestPage> {
               spacing: 8,
               runSpacing: 8,
               children: [
+                // 内置服务器控制
+                ElevatedButton.icon(
+                  onPressed: _isBuiltinConnected ? _disconnectFromBuiltinServer : _connectToBuiltinServer,
+                  icon: Icon(_isBuiltinConnected ? Icons.link_off : Icons.link),
+                  label: Text(_isBuiltinConnected ? '断开内置服务器' : '连接内置服务器'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isBuiltinConnected ? Colors.orange : Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _isBuiltinConnected ? _testBuiltinConnection : null,
+                  icon: const Icon(Icons.check_circle),
+                  label: const Text('测试内置服务器'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _runIntegrationTest,
+                  icon: const Icon(Icons.science),
+                  label: const Text('运行集成测试'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                
+                // 分隔线
+                const SizedBox(width: 16, child: Divider()),
+                
+                // 独立服务器控制
                 ElevatedButton.icon(
                   onPressed: _isServerRunning ? null : _startServer,
                   icon: const Icon(Icons.play_arrow),
-                  label: const Text('启动 (STDIO)'),
+                  label: const Text('启动独立 (STDIO)'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -258,7 +391,7 @@ class _UrlSchemesMcpTestPageState extends State<UrlSchemesMcpTestPage> {
                 ElevatedButton.icon(
                   onPressed: _isServerRunning ? null : _startServerSSE,
                   icon: const Icon(Icons.web),
-                  label: const Text('启动 (SSE)'),
+                  label: const Text('启动独立 (SSE)'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
@@ -373,10 +506,13 @@ class _UrlSchemesMcpTestPageState extends State<UrlSchemesMcpTestPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '1. 点击"启动"按钮启动 MCP Server\n'
-                  '2. 使用测试按钮验证各项功能\n'
-                  '3. STDIO 模式适合命令行集成\n'
-                  '4. SSE 模式适合 Web 应用集成',
+                  '推荐使用方式：\n'
+                  '1. 点击"连接内置服务器"启用 AI 对话集成\n'
+                  '2. 使用"测试内置服务器"验证功能\n'
+                  '3. 在 AI 对话中直接调用 URL Schemes 功能\n'
+                  '\n独立服务器模式：\n'
+                  '4. STDIO 模式适合命令行集成\n'
+                  '5. SSE 模式适合 Web 应用集成',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.blue.shade700,

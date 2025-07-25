@@ -129,6 +129,16 @@ class McpConfig {
   static void loadFromEnv() {
     _defaultServers.clear();
 
+    // 添加内置的 URL Schemes MCP Server（始终可用）
+    _defaultServers.add(McpServerConfig(
+      id: 'url_schemes',
+      name: 'URL Schemes 服务器',
+      description: '提供应用启动和 URL Schemes 管理功能',
+      type: McpServerType.sse,
+      url: 'builtin://url_schemes',  // 使用特殊的内置URL标识
+      enabled: true,
+    ));
+
     // 加载文件系统服务器
     final fileSystemUrl = dotenv.env['MCP_FILESYSTEM_URL'];
     if (fileSystemUrl != null && fileSystemUrl.isNotEmpty) {
