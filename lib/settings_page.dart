@@ -305,7 +305,7 @@ class _SettingsPageState extends State<SettingsPage> {
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: const Color(0xFF76A4A5),
-            inactiveTrackColor: const Color(0xFFB6D2D3).withOpacity(0.5),
+            inactiveTrackColor: const Color(0xFFB6D2D3).withValues(alpha:0.5),
             thumbColor: Colors.white,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),

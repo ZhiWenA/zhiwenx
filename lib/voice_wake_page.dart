@@ -657,10 +657,10 @@ class _VoiceWakePageState extends State<VoiceWakePage>
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF76A4A5).withOpacity(0.1),
+                          color: const Color(0xFF76A4A5).withValues(alpha:0.1),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: const Color(0xFF76A4A5).withOpacity(0.3),
+                            color: const Color(0xFF76A4A5).withValues(alpha:0.3),
                             width: 1,
                           ),
                         ),
@@ -743,7 +743,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF76A4A5).withOpacity(opacity),
+              color: const Color(0xFF76A4A5).withValues(alpha:opacity),
             ),
           );
         },
@@ -760,7 +760,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF76A4A5).withOpacity(opacity),
+              color: const Color(0xFF76A4A5).withValues(alpha:opacity),
             ),
           );
         },
@@ -777,7 +777,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF76A4A5).withOpacity(opacity),
+              color: const Color(0xFF76A4A5).withValues(alpha:opacity),
             ),
           );
         },
@@ -829,7 +829,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
+          color: Colors.black.withValues(alpha:0.7),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -890,14 +890,14 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: isCurrentlyActive ? const Color(0xFFE74C3C).withOpacity(0.1) : Colors.white,
+              color: isCurrentlyActive ? const Color(0xFFE74C3C).withValues(alpha:0.1) : Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: isCurrentlyActive 
                 ? Border.all(color: const Color(0xFFE74C3C), width: 2)
                 : null,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha:0.1),
                   blurRadius: 3,
                   offset: const Offset(0, 1),
                 ),
@@ -938,12 +938,12 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
+              color: Colors.orange.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.withOpacity(0.3), width: 2),
+              border: Border.all(color: Colors.orange.withValues(alpha:0.3), width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha:0.1),
                   blurRadius: 3,
                   offset: const Offset(0, 1),
                 ),

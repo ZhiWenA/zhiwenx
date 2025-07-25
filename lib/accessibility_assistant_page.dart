@@ -31,7 +31,7 @@ class AccessibilityOverlayWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha:0.2),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -46,7 +46,7 @@ class AccessibilityOverlayWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple.withOpacity(0.1),
+                  color: Colors.deepPurple.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -116,7 +116,7 @@ class AccessibilityOverlayWidget extends StatelessWidget {
     required String tooltip,
   }) {
     return Material(
-      color: color.withOpacity(0.1),
+      color: color.withValues(alpha:0.1),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onPressed,
@@ -489,7 +489,7 @@ class _AccessibilityAssistantPageState extends State<AccessibilityAssistantPage>
                       if (_events.isNotEmpty)
                         Chip(
                           label: Text('${_events.length}'),
-                          backgroundColor: Colors.deepPurple.withOpacity(0.1),
+                          backgroundColor: Colors.deepPurple.withValues(alpha:0.1),
                           labelStyle: const TextStyle(color: Colors.deepPurple),
                         ),
                     ],
@@ -541,7 +541,7 @@ class _AccessibilityAssistantPageState extends State<AccessibilityAssistantPage>
                                       width: 40,
                                       height: 40,
                                       decoration: BoxDecoration(
-                                        color: Colors.deepPurple.withOpacity(0.1),
+                                        color: Colors.deepPurple.withValues(alpha:0.1),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Icon(

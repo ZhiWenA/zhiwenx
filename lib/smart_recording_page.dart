@@ -358,7 +358,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              Theme.of(context).colorScheme.primary.withValues(alpha:0.1),
               Theme.of(context).colorScheme.surface,
             ],
           ),
@@ -409,7 +409,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha:0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -433,7 +433,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
                         Text(
                           _isServiceEnabled ? "服务运行正常" : "服务未开启",
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha:0.9),
                             fontSize: 16,
                           ),
                         ),
@@ -463,7 +463,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -481,7 +481,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
                     Text(
                       _statusMessage,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha:0.9),
                         fontSize: 14,
                       ),
                     ),
@@ -535,7 +535,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha:0.7),
                 fontSize: 12,
               ),
             ),
@@ -629,7 +629,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha:0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Padding(
@@ -696,7 +696,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
           borderRadius: BorderRadius.circular(12),
         ),
         elevation: 2,
-        shadowColor: backgroundColor.withOpacity(0.3),
+        shadowColor: backgroundColor.withValues(alpha:0.3),
       ),
     );
   }
@@ -749,10 +749,10 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha:0.3),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
                     style: BorderStyle.solid,
                     width: 1,
                   ),
@@ -778,7 +778,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha:0.5),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButton<String>(
@@ -889,7 +889,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
             
             Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha:0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: SwitchListTile(
@@ -964,7 +964,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha:0.3),
           width: 1,
         ),
         borderRadius: BorderRadius.circular(12),
@@ -1060,7 +1060,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha:0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -1091,7 +1091,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1101,7 +1101,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
                   itemCount: _recentActions.length,
                   separatorBuilder: (context, index) => Divider(
                     height: 1,
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha:0.1),
                   ),
                   itemBuilder: (context, index) {
                     final action = _recentActions[index];
@@ -1112,7 +1112,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: _getActionColor(action['type']).withOpacity(0.1),
+                          color: _getActionColor(action['type']).withValues(alpha:0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: _getActionIcon(action['type']),
@@ -1141,7 +1141,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
                             _formatTime(timestamp),
                             style: TextStyle(
                               fontSize: 11,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha:0.7),
                             ),
                           ),
                         ],
@@ -1149,7 +1149,7 @@ class _SmartRecordingPageState extends State<SmartRecordingPage> {
                       trailing: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _getActionColor(action['type']).withOpacity(0.1),
+                          color: _getActionColor(action['type']).withValues(alpha:0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(

@@ -287,7 +287,7 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -369,7 +369,7 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
                       backgroundColor: const Color(0xFF76A4A5),
                       foregroundColor: Colors.white,
                       elevation: 3,
-                      shadowColor: Colors.black.withOpacity(0.1),
+                      shadowColor: Colors.black.withValues(alpha:0.1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -403,7 +403,7 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
                       backgroundColor: const Color(0xFFF9F7F5),
                       foregroundColor: const Color(0xFF5D5753),
                       elevation: 3,
-                      shadowColor: Colors.black.withOpacity(0.1),
+                      shadowColor: Colors.black.withValues(alpha:0.1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),

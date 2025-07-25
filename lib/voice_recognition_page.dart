@@ -359,7 +359,7 @@ class _VoiceRecognitionPageState extends State<VoiceRecognitionPage>
             height: 256 * _waveAnimation1.value,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF76A4A5).withOpacity(0.2 * (1 - _waveAnimation1.value)),
+              color: const Color(0xFF76A4A5).withValues(alpha:0.2 * (1 - _waveAnimation1.value)),
             ),
           );
         },
@@ -374,7 +374,7 @@ class _VoiceRecognitionPageState extends State<VoiceRecognitionPage>
             height: 220 * _waveAnimation2.value,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF76A4A5).withOpacity(0.2 * (1 - _waveAnimation2.value)),
+              color: const Color(0xFF76A4A5).withValues(alpha:0.2 * (1 - _waveAnimation2.value)),
             ),
           );
         },
@@ -389,7 +389,7 @@ class _VoiceRecognitionPageState extends State<VoiceRecognitionPage>
             height: 184 * _waveAnimation3.value,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF76A4A5).withOpacity(0.2 * (1 - _waveAnimation3.value)),
+              color: const Color(0xFF76A4A5).withValues(alpha:0.2 * (1 - _waveAnimation3.value)),
             ),
           );
         },
@@ -411,7 +411,7 @@ class _VoiceRecognitionPageState extends State<VoiceRecognitionPage>
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha:0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -420,7 +420,7 @@ class _VoiceRecognitionPageState extends State<VoiceRecognitionPage>
             child: Container(
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: _isCancelling ? Colors.red.withOpacity(0.3) : const Color(0xFFB6D2D3),
+                color: _isCancelling ? Colors.red.withValues(alpha:0.3) : const Color(0xFFB6D2D3),
                 shape: BoxShape.circle,
               ),
               child: Container(
@@ -602,7 +602,7 @@ class _VoiceRecognitionPageState extends State<VoiceRecognitionPage>
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha:0.1),
                   blurRadius: 3,
                   offset: const Offset(0, 1),
                 ),
