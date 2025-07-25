@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:asr_plugin/asr_plugin.dart';
-import 'package:tts_plugin/tts_plugin.dart';
 import 'dart:developer';
 import 'tencent_cloud_config.dart';
 import 'app_selection_page.dart';
@@ -20,7 +19,6 @@ class _VoiceRecognitionPageState extends State<VoiceRecognitionPage>
   late ASRControllerConfig _config;
   String _result = "";
   bool _isRecognizing = false;
-  bool _isPressing = false;
   bool _isCancelling = false;
   double _dragOffset = 0.0;
   
@@ -207,7 +205,6 @@ class _VoiceRecognitionPageState extends State<VoiceRecognitionPage>
   
   void _onPanStart(DragStartDetails details) {
     setState(() {
-      _isPressing = true;
       _dragOffset = 0.0;
       _isCancelling = false;
     });
@@ -224,7 +221,6 @@ class _VoiceRecognitionPageState extends State<VoiceRecognitionPage>
   
   void _onPanEnd(DragEndDetails details) {
     setState(() {
-      _isPressing = false;
     });
     _scaleController.reverse();
     
@@ -571,7 +567,7 @@ class _VoiceRecognitionPageState extends State<VoiceRecognitionPage>
               ],
             ),
           ),
-          Container(
+          SizedBox(
             height: 34,
             child: Center(
               child: Container(

@@ -1,13 +1,13 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:asr_plugin/asr_plugin.dart';
 import 'package:tts_plugin/tts_plugin.dart';
 import 'dart:developer';
 import 'tencent_cloud_config.dart';
-import 'voice_recognition_page.dart';
 import 'settings_page.dart';
 import 'app_selection_page.dart';
-import 'home_page.dart';
 
 class VoiceWakePage extends StatefulWidget {
   const VoiceWakePage({super.key});
@@ -29,16 +29,15 @@ class _VoiceWakePageState extends State<VoiceWakePage>
   late Animation<double> _waveAnimation2;
   late Animation<double> _waveAnimation3;
   late Animation<double> _scaleAnimation;
-  late AnimationController _translationController;
-  late Animation<Offset> _translationAnimation;
-  late Animation<double> _waveAnimation;
   
   ASRController? _controller;
   TTSController? _ttsController;
   bool _isRecognizing = false;
+  // ignore: unused_field
   bool _isPressing = false;
   String _result = "";
   bool _hasValidResult = false; // 标记是否有有效的识别结果
+  // ignore: unused_field
   String? _activeNavItem;
   
   int _tapCount = 0;
@@ -154,59 +153,6 @@ class _VoiceWakePageState extends State<VoiceWakePage>
     super.dispose();
   }
   
-  void _handleDeveloperModeTap() {
-    final now = DateTime.now();
-    
-    // 如果距离上次点击超过2秒，重置计数
-    if (_lastTapTime == null || now.difference(_lastTapTime!).inSeconds > 2) {
-      _tapCount = 1;
-    } else {
-      _tapCount++;
-    }
-    
-    _lastTapTime = now;
-    
-    // 取消之前的重置定时器
-    _resetTimer?.cancel();
-    
-    if (_tapCount >= 3) {
-      // 连续点击三次，进入开发者模式
-      _tapCount = 0;
-      _lastTapTime = null;
-      
-      // 显示提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🔧 进入开发者模式'),
-          duration: Duration(seconds: 1),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      
-      // 延迟一下再跳转，让用户看到提示
-      Future.delayed(const Duration(milliseconds: 500), () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
-      });
-    } else {
-      // 显示当前点击次数提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('开发者模式 $_tapCount/3'),
-          duration: const Duration(milliseconds: 800),
-          backgroundColor: Colors.grey,
-        ),
-      );
-      
-      // 设置2秒后重置计数的定时器
-      _resetTimer = Timer(const Duration(seconds: 2), () {
-        _tapCount = 0;
-        _lastTapTime = null;
-      });
-    }
-  }
 
   Future<void> _startRecognition() async {
     if (_isRecognizing || _controller == null) return;
@@ -1034,7 +980,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
                 ],
               ),
           ),
-          Container(
+          SizedBox(
             height: 34,
             child: Center(
               child: Container(
