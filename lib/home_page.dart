@@ -3,6 +3,8 @@ import 'chat_page.dart';
 import 'smart_recording_page.dart';
 import 'voice_assistant_page.dart';
 import 'automation_rule_page.dart';
+import 'global_widget_capture_page.dart';
+import 'global_capture_test_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -111,6 +113,38 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const AutomationRulePage()),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: '全局控件抓取',
+                subtitle: '实时抓取屏幕控件信息，辅助规则创建',
+                icon: Icons.open_in_new,
+                color: Colors.teal,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GlobalWidgetCapturePage()),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: '功能测试',
+                subtitle: '测试全局抓取和悬浮窗功能',
+                icon: Icons.bug_report,
+                color: Colors.deepOrange,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GlobalCaptureTestPage()),
                   );
                 },
               ),

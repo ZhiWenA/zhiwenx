@@ -1312,6 +1312,57 @@ class SmartAccessibilityService : AccessibilityService() {
         ))
     }
     
+    // 高亮控件方法
+    fun highlightWidget(bounds: Map<String, Any>, color: Long?, duration: Int?) {
+        try {
+            val left = (bounds["left"] as? Number)?.toInt() ?: 0
+            val top = (bounds["top"] as? Number)?.toInt() ?: 0
+            val right = (bounds["right"] as? Number)?.toInt() ?: 0
+            val bottom = (bounds["bottom"] as? Number)?.toInt() ?: 0
+            
+            Log.d(TAG, "高亮控件: ($left, $top, $right, $bottom)")
+            
+            // 这里可以实现高亮效果，比如显示一个临时的覆盖层
+            // 暂时只记录日志
+            Toast.makeText(this, "高亮控件: (${left}, ${top}) - (${right}, ${bottom})", Toast.LENGTH_SHORT).show()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "高亮控件失败", e)
+        }
+    }
+    
+    // 显示控件详情方法
+    fun showWidgetDetails(widget: Map<String, Any>) {
+        try {
+            val className = widget["className"] as? String ?: "未知"
+            val text = widget["text"] as? String ?: ""
+            val resourceId = widget["resourceId"] as? String ?: ""
+            
+            Log.d(TAG, "显示控件详情: $className")
+            
+            val message = "控件类型: $className\n文本: $text\n资源ID: $resourceId"
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "显示控件详情失败", e)
+        }
+    }
+    
+    // 切换选择模式方法
+    fun toggleSelectionMode(enabled: Boolean) {
+        try {
+            Log.d(TAG, "切换选择模式: $enabled")
+            
+            // 这里可以实现选择模式的逻辑
+            // 暂时只记录日志和显示提示
+            val message = if (enabled) "选择模式已开启" else "选择模式已关闭"
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "切换选择模式失败", e)
+        }
+    }
+    
     private fun isAppInstalled(packageName: String): Boolean {
         return try {
             packageManager.getPackageInfo(packageName, 0)

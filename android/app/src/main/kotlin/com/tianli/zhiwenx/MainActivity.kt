@@ -19,6 +19,8 @@ class MainActivity : FlutterActivity() {
     private val FLOATING_WINDOW_EVENT_CHANNEL = "com.tianli.zhiwenx/floating_window_events"
     private val ACTION_RECORDING_EVENT_CHANNEL = "com.tianli.zhiwenx/action_recording_events"
     private val AUTOMATION_ENGINE_CHANNEL = "com.tianli.zhiwenx/automation_engine"
+    private val GLOBAL_CAPTURE_CHANNEL = "com.tianli.zhiwenx/global_capture"
+    private val OVERLAY_PERMISSION_CHANNEL = "com.tianli.zhiwenx/overlay_permission"
     
     private val OVERLAY_PERMISSION_REQUEST_CODE = 1001
     
@@ -262,6 +264,112 @@ class MainActivity : FlutterActivity() {
         // 存储通道引用
         FloatingWindowService.methodChannel = floatingWindowMethodChannel
         ActionRecordingService.methodChannel = actionRecordingMethodChannel
+        
+        // 全局控件抓取方法通道
+        val globalCaptureMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, GLOBAL_CAPTURE_CHANNEL)
+        globalCaptureMethodChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "checkAccessibilityPermission" -> {
+                    val hasPermission = SmartAccessibilityService.instance != null
+                    result.success(hasPermission)
+                }
+                "showGlobalOverlay" -> {
+                    showFloatingWindow()
+                    result.success(null)
+                }
+                "hideGlobalOverlay" -> {
+                    hideFloatingWindow()
+                    result.success(null)
+                }
+                "captureScreenWidgets" -> {
+                    val widgets = SmartAccessibilityService.instance?.getScreenWidgets() ?: emptyList()
+                    result.success(widgets)
+                }
+                "highlightWidget" -> {
+                    val bounds = call.argument<Map<String, Any>>("bounds")
+                    val color = call.argument<Long>("color")
+                    val duration = call.argument<Int>("duration")
+                    if (bounds != null) {
+                        SmartAccessibilityService.instance?.highlightWidget(bounds, color, duration)
+                        result.success(null)
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Bounds is required", null)
+                    }
+                }
+                "showWidgetDetails" -> {
+                    val widget = call.argument<Map<String, Any>>("widget")
+                    if (widget != null) {
+                        SmartAccessibilityService.instance?.showWidgetDetails(widget)
+                        result.success(null)
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Widget is required", null)
+                    }
+                }
+                "toggleSelectionMode" -> {
+                    val enabled = call.argument<Boolean>("enabled") ?: false
+                    SmartAccessibilityService.instance?.toggleSelectionMode(enabled)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
+        
+        // 悬浮窗权限方法通道
+        val overlayPermissionMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, OVERLAY_PERMISSION_CHANNEL)
+        overlayPermissionMethodChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "hasOverlayPermission" -> {
+                    val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        Settings.canDrawOverlays(this)
+                    } else {
+                        true
+                    }
+                    result.success(hasPermission)
+                }
+                "requestOverlayPermission" -> {
+                    requestOverlayPermission()
+                    // 返回当前权限状态
+                    val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        Settings.canDrawOverlays(this)
+                    } else {
+                        true
+                    }
+                    result.success(hasPermission)
+                }
+                "openAppSettings" -> {
+                    try {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        intent.data = Uri.parse("package:$packageName")
+                        startActivity(intent)
+                        result.success(null)
+                    } catch (e: Exception) {
+                        result.error("FAILED", "无法打开应用设置", e.message)
+                    }
+                }
+                "showFloatingWindow" -> {
+                    val title = call.argument<String>("title") ?: "悬浮窗"
+                    val content = call.argument<String>("content") ?: ""
+                    val x = call.argument<Int>("x")
+                    val y = call.argument<Int>("y")
+                    val width = call.argument<Int>("width")
+                    val height = call.argument<Int>("height")
+                    
+                    showCustomFloatingWindow(title, content, x, y, width, height)
+                    result.success(true)
+                }
+                "hideFloatingWindow" -> {
+                    hideFloatingWindow()
+                    result.success(null)
+                }
+                "updateFloatingWindow" -> {
+                    val title = call.argument<String>("title")
+                    val content = call.argument<String>("content")
+                    updateFloatingWindow(title, content)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
     
     private fun requestOverlayPermission() {
@@ -291,6 +399,32 @@ class MainActivity : FlutterActivity() {
     private fun hideFloatingWindow() {
         val intent = Intent(this, FloatingWindowService::class.java)
         intent.action = "HIDE_FLOATING_WINDOW"
+        startService(intent)
+    }
+    
+    private fun showCustomFloatingWindow(title: String, content: String, x: Int?, y: Int?, width: Int?, height: Int?) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, "需要悬浮窗权限", Toast.LENGTH_SHORT).show()
+            requestOverlayPermission()
+            return
+        }
+        
+        val intent = Intent(this, FloatingWindowService::class.java)
+        intent.action = "SHOW_CUSTOM_FLOATING_WINDOW"
+        intent.putExtra("title", title)
+        intent.putExtra("content", content)
+        x?.let { intent.putExtra("x", it) }
+        y?.let { intent.putExtra("y", it) }
+        width?.let { intent.putExtra("width", it) }
+        height?.let { intent.putExtra("height", it) }
+        startService(intent)
+    }
+    
+    private fun updateFloatingWindow(title: String?, content: String?) {
+        val intent = Intent(this, FloatingWindowService::class.java)
+        intent.action = "UPDATE_FLOATING_WINDOW"
+        title?.let { intent.putExtra("title", it) }
+        content?.let { intent.putExtra("content", it) }
         startService(intent)
     }
     

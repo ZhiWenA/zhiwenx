@@ -34,7 +34,7 @@ class AutomationRuleEngine {
     try {
       final result = await _channel.invokeMethod('getScreenWidgets');
       final List<dynamic> widgets = result ?? [];
-      return widgets.map((w) => WidgetInfo.fromJson(w)).toList();
+      return widgets.map((w) => WidgetInfo.fromJson(Map<String, dynamic>.from(w as Map))).toList();
     } catch (e) {
       log('获取控件信息失败: $e');
       return [];
@@ -45,7 +45,7 @@ class AutomationRuleEngine {
   static Future<WidgetInfo?> findWidget(WidgetSelector selector) async {
     try {
       final result = await _channel.invokeMethod('findWidget', {'selector': selector.toJson()});
-      return result != null ? WidgetInfo.fromJson(result) : null;
+      return result != null ? WidgetInfo.fromJson(Map<String, dynamic>.from(result as Map)) : null;
     } catch (e) {
       log('查找控件失败: $e');
       return null;
@@ -199,7 +199,7 @@ class AutomationRule {
   factory AutomationRule.fromJson(Map<String, dynamic> json) => AutomationRule(
     name: json['name'],
     description: json['description'],
-    steps: (json['steps'] as List).map((s) => AutomationStep.fromJson(s)).toList(),
+    steps: (json['steps'] as List).map((s) => AutomationStep.fromJson(Map<String, dynamic>.from(s as Map))).toList(),
     metadata: json['metadata'],
   );
 
@@ -249,7 +249,7 @@ class AutomationStep {
   factory AutomationStep.fromJson(Map<String, dynamic> json) => AutomationStep(
     type: StepType.values.firstWhere((e) => e.name == json['type']),
     description: json['description'],
-    selector: json['selector'] != null ? WidgetSelector.fromJson(json['selector']) : null,
+    selector: json['selector'] != null ? WidgetSelector.fromJson(Map<String, dynamic>.from(json['selector'] as Map)) : null,
     inputText: json['inputText'],
     appPackage: json['appPackage'],
     keyCode: json['keyCode'],
@@ -430,8 +430,8 @@ class WidgetInfo {
     isScrollable: json['isScrollable'] ?? false,
     isLongClickable: json['isLongClickable'] ?? false,
     isPassword: json['isPassword'] ?? false,
-    bounds: WidgetBounds.fromJson(json['bounds']),
-    children: (json['children'] as List?)?.map((c) => WidgetInfo.fromJson(c)).toList() ?? [],
+    bounds: WidgetBounds.fromJson(Map<String, dynamic>.from(json['bounds'] as Map)),
+    children: (json['children'] as List?)?.map((c) => WidgetInfo.fromJson(Map<String, dynamic>.from(c as Map))).toList() ?? [],
   );
 }
 

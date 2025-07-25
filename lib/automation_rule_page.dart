@@ -4,6 +4,7 @@ import 'automation_rule_engine.dart';
 import 'automation_test_page.dart';
 import 'utils/accessibility_permission_manager.dart';
 import 'widget_capture_page.dart';
+import 'global_widget_capture_page.dart';
 
 class AutomationRulePage extends StatefulWidget {
   const AutomationRulePage({super.key});
@@ -377,6 +378,16 @@ class _AutomationRulePageState extends State<AutomationRulePage> {
             },
             icon: const Icon(Icons.widgets),
             tooltip: '实时控件抓取',
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GlobalWidgetCapturePage()),
+              );
+            },
+            icon: const Icon(Icons.open_in_new),
+            tooltip: '全局控件抓取',
           ),
           PopupMenuButton<String>(
             onSelected: (value) {

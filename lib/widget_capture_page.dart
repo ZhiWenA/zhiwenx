@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'automation_rule_engine.dart';
 import 'utils/accessibility_permission_manager.dart';
+import 'widgets/enhanced_widget_info_card.dart';
+import 'global_widget_capture_page.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -158,6 +160,16 @@ class _WidgetCapturePageState extends State<WidgetCapturePage> {
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GlobalWidgetCapturePage()),
+              );
+            },
+            icon: const Icon(Icons.open_in_new),
+            tooltip: '全局抓取模式',
+          ),
           IconButton(
             onPressed: _widgets.isEmpty ? null : _exportWidgets,
             icon: const Icon(Icons.download),
