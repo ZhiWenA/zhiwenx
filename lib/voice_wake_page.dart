@@ -134,7 +134,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
     config.secretKey = TencentCloudConfig.secretKey;
     config.voiceSpeed = 0;
     config.voiceVolume = 1;
-    config.voiceType = 1001;
+    config.voiceType = 601003;
     config.voiceLanguage = 1;
     config.codec = "mp3";
     _ttsController?.config = config;
