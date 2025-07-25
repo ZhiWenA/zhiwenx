@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'chat_models.dart';
-import 'openai_service.dart';
+import 'enhanced_openai_service_v2.dart';
 import 'openai_config.dart';
 import 'voice_service.dart';
+import 'mcp_config_page.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -37,6 +38,16 @@ class _ChatPageState extends State<ChatPage> {
     _checkConnection();
     _addSystemMessage();
     _initializeVoice();
+    _initializeEnhancedService();
+  }
+
+  // 初始化增强服务
+  void _initializeEnhancedService() async {
+    try {
+      await EnhancedOpenAIService.initialize();
+    } catch (e) {
+      _showErrorSnackBar('MCP服务初始化失败: $e');
+    }
   }
 
   @override
@@ -136,7 +147,7 @@ class _ChatPageState extends State<ChatPage> {
     });
     
     if (_isConnected) {
-      final connected = await OpenAIService.testConnection();
+      final connected = await EnhancedOpenAIService.testConnection();
       setState(() {
         _isConnected = connected;
       });
@@ -176,7 +187,8 @@ class _ChatPageState extends State<ChatPage> {
       // 取消之前的流订阅
       await _streamSubscription?.cancel();
       
-      final stream = OpenAIService.sendStreamChatRequest(_messages.sublist(0, _messages.length - 1));
+      // 使用增强的OpenAI服务
+      final stream = EnhancedOpenAIService.sendStreamChatRequest(_messages.sublist(0, _messages.length - 1));
       String fullContent = '';
       
       _streamSubscription = stream.listen(
@@ -457,6 +469,15 @@ class _ChatPageState extends State<ChatPage> {
               color: _isVoiceEnabled ? Colors.white : Colors.red.shade200,
             ),
             tooltip: _isVoiceEnabled ? '语音功能已启用' : '语音功能未启用，点击查看配置',
+          ),
+          
+          // MCP配置按钮
+          IconButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const McpConfigPage()),
+            ),
+            icon: const Icon(Icons.extension),
+            tooltip: 'MCP 配置',
           ),
           
           IconButton(

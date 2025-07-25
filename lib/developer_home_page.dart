@@ -2,24 +2,21 @@ import 'package:flutter/material.dart';
 import 'chat_page.dart';
 import 'smart_recording_page.dart';
 import 'voice_assistant_page.dart';
-import 'voice_wake_page.dart';
 import 'automation_rule_page.dart';
 import 'global_widget_capture_page.dart';
 import 'global_capture_test_page.dart';
-import 'action_recording_page.dart';
 import 'mcp_config_page.dart';
 import 'mcp_test_page.dart';
-import 'developer_home_page.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class DeveloperHomePage extends StatelessWidget {
+  const DeveloperHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('智问X'),
-        backgroundColor: Colors.deepPurple,
+        title: const Text('开发者模式 - 原始功能界面'),
+        backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
       ),
       body: SafeArea(
@@ -34,22 +31,22 @@ class HomePage extends StatelessWidget {
                 child: const Column(
                   children: [
                     Icon(
-                      Icons.smart_toy,
+                      Icons.developer_mode,
                       size: 80,
-                      color: Colors.deepPurple,
+                      color: Colors.orange,
                     ),
                     SizedBox(height: 20),
                     Text(
-                      '智问X',
+                      '开发者功能界面',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
+                        color: Colors.orange,
                       ),
                     ),
                     SizedBox(height: 10),
                     Text(
-                      '测试DEMO',
+                      '队友开发的原始功能界面',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey,
@@ -186,63 +183,6 @@ class HomePage extends StatelessWidget {
                 },
               ),
               
-              
-              const SizedBox(height: 16),
-              
-              _buildFeatureCard(
-                context,
-                title: '老人语音助手界面',
-                subtitle: '专为老年人设计的语音交互界面',
-                icon: Icons.elderly,
-                color: const Color(0xFF76A4A5),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const VoiceWakePage()),
-                  );
-                },
-              ),
-              
-              const SizedBox(height: 16),
-              
-              _buildFeatureCard(
-                context,
-                title: '智能辅助控制台',
-                subtitle: '操作录制、回放与无障碍服务',
-                icon: Icons.accessibility_new,
-                color: Colors.purple,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ActionRecordingPage()),
-                  );
-                },
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // 开发者模式分割线
-              const Divider(
-                thickness: 2,
-                color: Colors.grey,
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // 开发者模式标题
-              const Text(
-                '开发者模式',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              _buildDeveloperModeCard(context),
-              
               // 底部留白，确保最后一个卡片不会贴底
               const SizedBox(height: 32),
             ],
@@ -301,70 +241,6 @@ class HomePage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.grey.shade400,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDeveloperModeCard(BuildContext context) {
-    return Card(
-      elevation: 4,
-      color: Colors.grey.shade100,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const DeveloperHomePage()),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Icon(
-                  Icons.developer_mode,
-                  size: 30,
-                  color: Colors.orange,
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '原始功能界面',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '访问队友开发的原始功能界面，用于开发和测试',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
                       ),
                     ),
                   ],
