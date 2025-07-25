@@ -57,6 +57,9 @@ dependencies:
   
   # JSON annotation for serialization
   json_annotation: ^4.8.1
+  
+  # Permission handler for requesting app permissions
+  permission_handler: ^11.0.1
 
 dev_dependencies:
   flutter_test:

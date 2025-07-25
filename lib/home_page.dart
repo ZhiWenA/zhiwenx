@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'chat_page.dart';
 import 'action_recording_page.dart';
 import 'voice_assistant_page.dart';
+import 'voice_wake_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -46,7 +47,23 @@ class HomePage extends StatelessWidget {
             // 功能卡片
             _buildFeatureCard(
               context,
-              title: '语音助手',
+              title: '老人语音助手界面',
+              subtitle: '专为老年人设计的语音交互界面',
+              icon: Icons.elderly,
+              color: const Color(0xFF76A4A5),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const VoiceWakePage()),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 16),
+            
+            _buildFeatureCard(
+              context,
+              title: '语音助手 (开发版)',
               subtitle: '语音识别 + 语音合成一体化体验',
               icon: Icons.assistant,
               color: Colors.deepPurple,
