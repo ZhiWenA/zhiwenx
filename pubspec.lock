@@ -278,10 +278,10 @@ packages:
     dependency: "direct main"
     description:
       name: http
-      sha256: "5895291c13fa8a3bd82e76d5627f69e0d85ca6a30dcac95c4ea19a5d555879c2"
+      sha256: "2c11f3f94c687ee9bad77c171151672986360b2b001d109814ee7140b2cf261b"
       url: "https://pub.dev"
     source: hosted
-    version: "0.13.6"
+    version: "1.4.0"
   http_multi_server:
     dependency: transitive
     description:
@@ -363,7 +363,7 @@ packages:
     source: hosted
     version: "5.1.1"
   logging:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: logging
       sha256: c8245ada5f1717ed44271ed1c26b8ce85ca3228fd2ffdb75468ab01979309d61
@@ -386,6 +386,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.11.1"
+  mcp_client:
+    dependency: "direct main"
+    description:
+      name: mcp_client
+      sha256: c28a5c06f1056ebfbe5f571bd2a24138ad9f4556540fb0d4171f5aceb85acd61
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
+  mcp_llm:
+    dependency: "direct main"
+    description:
+      name: mcp_llm
+      sha256: "30c236b6518eac657bb97e95ef3c023717b6a4cf6e17e52c37ddce2a24e00e55"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
   meta:
     dependency: transitive
     description:
@@ -551,6 +567,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.10.1"
+  sprintf:
+    dependency: transitive
+    description:
+      name: sprintf
+      sha256: "1fc9ffe69d4df602376b52949af107d8f5703b77cda567c4d7d86a0693120f23"
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.0"
+  sqlite3:
+    dependency: transitive
+    description:
+      name: sqlite3
+      sha256: "608b56d594e4c8498c972c8f1507209f9fd74939971b948ddbbfbfd1c9cb3c15"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.7.7"
   stack_trace:
     dependency: transitive
     description:
@@ -622,6 +654,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  uuid:
+    dependency: transitive
+    description:
+      name: uuid
+      sha256: a5be9ef6618a7ac1e964353ef476418026db906c4facdedaa299b7a2e71690ff
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.5.1"
   vector_math:
     dependency: transitive
     description:

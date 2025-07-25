@@ -5,6 +5,8 @@ import 'voice_assistant_page.dart';
 import 'automation_rule_page.dart';
 import 'global_widget_capture_page.dart';
 import 'global_capture_test_page.dart';
+import 'mcp_config_page.dart';
+import 'mcp_test_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -129,6 +131,38 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const GlobalWidgetCapturePage()),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: 'MCP 配置',
+                subtitle: 'Model Context Protocol 服务器配置和管理',
+                icon: Icons.extension,
+                color: Colors.purple,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const McpConfigPage()),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: 'MCP 测试',
+                subtitle: '测试模型上下文协议功能',
+                icon: Icons.psychology,
+                color: Colors.purple,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const McpTestPage()),
                   );
                 },
               ),
