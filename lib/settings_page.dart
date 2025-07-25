@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'home_page.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -11,15 +12,32 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  double _volume = 0.7;
-  double _brightness = 0.6;
-  String _fontSize = '大';
   String _voiceSensitivity = '中';
   String _videoApp = '抖音';
   String _musicApp = '网易云音乐';
+  String _appVersion = '加载中...';
   
   int _tapCount = 0;
   DateTime? _lastTapTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      setState(() {
+        _appVersion = 'v${packageInfo.version}';
+      });
+    } catch (e) {
+      setState(() {
+        _appVersion = 'v1.0.0';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +46,6 @@ class _SettingsPageState extends State<SettingsPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // 状态栏
-            _buildStatusBar(),
-            
             // 头部导航
             _buildHeader(),
             
@@ -40,11 +55,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // 基本设置
-                    _buildBasicSettings(),
-                    
-                    const SizedBox(height: 24),
-                    
                     // 高级设置
                     _buildAdvancedSettings(),
                     
@@ -65,44 +75,11 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDeveloperModeEntry() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: GestureDetector(
-        onTap: _handleDeveloperModeTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: Colors.orange.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.developer_mode,
-                color: Colors.orange,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '开发者模式',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  // 保存设置
+  void _saveSettings() {
+    // 在这里添加保存设置到本地存储的逻辑
+    // 例如使用 SharedPreferences
+    print('保存设置: 语音识别灵敏度=$_voiceSensitivity, 视频应用=$_videoApp, 音乐应用=$_musicApp');
   }
 
   void _handleDeveloperModeTap() {
@@ -150,75 +127,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
    }
 
-   // 设置系统音量
-    void _setSystemVolume(double volume) {
-      try {
-        // 在实际应用中，这里会调用原生代码来设置系统音量
-        // 静默设置，不显示提醒
-        print('音量设置为: ${(volume * 100).round()}%');
-      } catch (e) {
-        print('设置音量失败: $e');
-      }
-    }
-
-   // 设置系统亮度
-    void _setSystemBrightness(double brightness) {
-      try {
-        // 在实际应用中，这里会调用原生代码来设置系统亮度
-        // 静默设置，不显示提醒
-        print('亮度设置为: ${(brightness * 100).round()}%');
-      } catch (e) {
-        print('设置亮度失败: $e');
-      }
-    }
-
-   // 设置系统字体大小
-   void _setSystemFontSize(String fontSize) {
-     try {
-       // 在实际应用中，这里会调用原生代码来设置系统字体大小
-       // 目前显示设置反馈
-       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(
-           content: Text('字体大小已设置为: $fontSize'),
-           duration: const Duration(milliseconds: 800),
-           backgroundColor: const Color(0xFF76A4A5),
-         ),
-       );
-     } catch (e) {
-       print('设置字体大小失败: $e');
-     }
-   }
- 
-   Widget _buildStatusBar() {
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '9:41',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF5D5753),
-            ),
-          ),
-          Row(
-            children: [
-              Icon(Icons.signal_cellular_4_bar, size: 16, color: Color(0xFF5D5753)),
-              SizedBox(width: 6),
-              Icon(Icons.wifi, size: 16, color: Color(0xFF5D5753)),
-              SizedBox(width: 6),
-              Icon(Icons.battery_3_bar, size: 16, color: Color(0xFF5D5753)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
+   Widget _buildHeader() {
     return Container(
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
@@ -261,70 +170,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
 
 
-  Widget _buildBasicSettings() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '基本设置',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // 音量设置
-          _buildSliderSetting(
-            '音量',
-            _volume,
-            Icons.volume_down,
-            Icons.volume_up,
-            (value) {
-              setState(() => _volume = value);
-              _setSystemVolume(value);
-            },
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // 屏幕亮度设置
-          _buildSliderSetting(
-            '屏幕亮度',
-            _brightness,
-            Icons.brightness_low,
-            Icons.brightness_high,
-            (value) {
-              setState(() => _brightness = value);
-              _setSystemBrightness(value);
-            },
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // 字体大小设置
-          _buildOptionSetting(
-            '字体大小',
-            _fontSize,
-            ['标准', '大', '特大'],
-            (value) {
-              setState(() => _fontSize = value);
-              _setSystemFontSize(value);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildAdvancedSettings() {
     return Container(
       width: double.infinity,
@@ -360,59 +205,6 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildAppSettings(),
         ],
       ),
-    );
-  }
-
-  Widget _buildSliderSetting(
-    String title,
-    double value,
-    IconData lowIcon,
-    IconData highIcon,
-    ValueChanged<double> onChanged,
-  ) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 14),
-            ),
-            Row(
-              children: [
-                Icon(
-                  lowIcon,
-                  color: const Color(0xFF76A4A5),
-                  size: 16,
-                ),
-                const SizedBox(width: 16),
-                Icon(
-                  highIcon,
-                  color: const Color(0xFF76A4A5),
-                  size: 16,
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            activeTrackColor: const Color(0xFF76A4A5),
-            inactiveTrackColor: const Color(0xFFB6D2D3).withValues(alpha:0.5),
-            thumbColor: Colors.white,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
-          ),
-          child: Slider(
-            value: value,
-            onChanged: onChanged,
-            min: 0.0,
-            max: 1.0,
-          ),
-        ),
-      ],
     );
   }
 
@@ -563,48 +355,56 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 16),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 '当前版本',
                 style: TextStyle(fontSize: 14),
               ),
               Text(
-                'v1.0.3',
-                style: TextStyle(
+                _appVersion,
+                style: const TextStyle(
                   fontSize: 14,
                   color: Color(0xFFA49D9A),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          // 开发者模式入口
           GestureDetector(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('正在检查更新...'),
-                  backgroundColor: Color(0xFF76A4A5),
+            onTap: _handleDeveloperModeTap,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.orange.withValues(alpha: 0.3),
+                  width: 1,
                 ),
-              );
-            },
-            child: const Row(
-              children: [
-                Text(
-                  '检查更新',
-                  style: TextStyle(
-                    color: Color(0xFF76A4A5),
-                    fontWeight: FontWeight.w500,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.developer_mode,
+                    color: Colors.orange,
+                    size: 20,
                   ),
-                ),
-                SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_forward,
-                  color: Color(0xFF76A4A5),
-                  size: 16,
-                ),
-              ],
+                  SizedBox(width: 8),
+                  Text(
+                    '开发者模式',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -617,9 +417,6 @@ class _SettingsPageState extends State<SettingsPage> {
       color: const Color(0xFFF9F7F5),
       child: Column(
         children: [
-          // 开发者模式入口
-          _buildDeveloperModeEntry(),
-          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: SizedBox(
@@ -627,6 +424,9 @@ class _SettingsPageState extends State<SettingsPage> {
               height: 56,
               child: ElevatedButton(
                 onPressed: () {
+                  // 保存设置的逻辑
+                  _saveSettings();
+                  
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('设置已保存'),

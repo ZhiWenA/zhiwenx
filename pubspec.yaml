@@ -71,6 +71,9 @@ dependencies:
   
   # URL launcher for opening URLs and app schemes
   url_launcher: ^6.2.4
+  
+  # Package info for getting app version
+  package_info_plus: ^8.3.0
 
 dev_dependencies:
   flutter_test:
