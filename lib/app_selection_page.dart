@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tts_plugin/tts_plugin.dart';
 import 'dart:developer';
 import 'tencent_cloud_config.dart';
+import 'services/url_schemes_service.dart';
 
 class AppSelectionPage extends StatefulWidget {
   final String recognizedText;
@@ -16,15 +17,25 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
   late TTSControllerConfig _ttsConfig;
   bool _isSynthesizing = false;
   String _selectedApp = "小红书";
-  String _appIcon = "https://static.paraflowcontent.com/public/resource/image/36fdf018-a869-4207-bf51-d1ab462e7556.jpeg";
+  String _selectedSchemeId = "xiaohongshu_search";
+  final UrlSchemesService _urlSchemesService = UrlSchemesService();
 
   @override
   void initState() {
     super.initState();
     _initializeTTSConfig();
     _setupTTSListener();
+    _initializeUrlSchemes();
     _determineApp();
     _autoPlayAndJump();
+  }
+  
+  Future<void> _initializeUrlSchemes() async {
+    try {
+      await _urlSchemesService.initialize();
+    } catch (e) {
+      log('Failed to initialize URL schemes service: $e');
+    }
   }
   
   void _autoPlayAndJump() {
@@ -88,21 +99,21 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
     
     if (text.startsWith('phone:')) {
       _selectedApp = "电话";
-      _appIcon = "https://static.paraflowcontent.com/public/resource/image/phone-icon.png";
+      _selectedSchemeId = "phone_call";
     } else if (text.startsWith('video:')) {
       _selectedApp = "微信";
-      _appIcon = "https://static.paraflowcontent.com/public/resource/image/wechat-icon.png";
+      _selectedSchemeId = "wechat_video";
     } else {
       // 原有的应用匹配逻辑
       if (text.contains('菜') || text.contains('做') || text.contains('食谱')) {
         _selectedApp = "小红书";
-        _appIcon = "https://static.paraflowcontent.com/public/resource/image/36fdf018-a869-4207-bf51-d1ab462e7556.jpeg";
+        _selectedSchemeId = "xiaohongshu_search";
       } else if (text.contains('视频') || text.contains('电影')) {
         _selectedApp = "抖音";
-        _appIcon = "https://static.paraflowcontent.com/public/resource/image/douyin-icon.png";
+        _selectedSchemeId = "douyin_search";
       } else if (text.contains('音乐') || text.contains('歌')) {
         _selectedApp = "网易云音乐";
-        _appIcon = "https://static.paraflowcontent.com/public/resource/image/netease-music-icon.png";
+        _selectedSchemeId = "netease_music_search";
       }
     }
   }
@@ -140,20 +151,65 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
     TTSController.instance.synthesize(message, null);
   }
 
-  void _confirmAndOpen() {
-    // 这里应该实现打开目标应用并执行搜索的逻辑
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('正在打开$_selectedApp并搜索：${widget.recognizedText}'),
-        backgroundColor: const Color(0xFF76A4A5),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
+  void _confirmAndOpen() async {
+    try {
+      // 提取搜索关键词
+      String keyword = widget.recognizedText;
+      
+      // 处理特殊格式的文本
+      if (keyword.startsWith('phone:') || keyword.startsWith('video:')) {
+        keyword = keyword.substring(6); // 移除前缀
+      }
+      
+      // 使用 URL Schemes 服务启动应用
+      final success = await _urlSchemesService.launchUrlScheme(_selectedSchemeId, {
+        'keyword': keyword,
+      });
+      
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('成功启动$_selectedApp'),
+              backgroundColor: const Color(0xFF76A4A5),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('启动$_selectedApp失败，可能应用未安装'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      log('Failed to launch URL scheme: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('启动应用时发生错误: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
     
-    // 模拟跳转延迟后返回主页
+    // 延迟后返回主页
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         Navigator.popUntil(context, (route) => route.isFirst);

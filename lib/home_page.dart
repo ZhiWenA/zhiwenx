@@ -9,6 +9,8 @@ import 'global_capture_test_page.dart';
 import 'action_recording_page.dart';
 import 'mcp_config_page.dart';
 import 'mcp_test_page.dart';
+import 'pages/url_schemes_page.dart';
+import 'pages/url_schemes_mcp_test_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -165,6 +167,38 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const McpTestPage()),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: 'URL Schemes 管理',
+                subtitle: '管理和配置应用 URL Schemes，支持 MCP 调用',
+                icon: Icons.link,
+                color: Colors.indigo,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const UrlSchemesPage()),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: 'URL Schemes MCP 测试',
+                subtitle: '测试 URL Schemes MCP Server 功能',
+                icon: Icons.api,
+                color: Colors.deepPurple,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const UrlSchemesMcpTestPage()),
                   );
                 },
               ),

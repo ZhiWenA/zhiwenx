@@ -1,0 +1,391 @@
+{
+  "version": "1.0.0",
+  "schemes": [
+    {
+      "id": "xiaohongshu_search",
+      "name": "小红书搜索",
+      "description": "在小红书中搜索指定关键词",
+      "scheme": "xhsdiscover",
+      "url_template": "xhsdiscover://search/result?keyword={keyword}",
+      "category": "social",
+      "enabled": true,
+      "parameters": {
+        "keyword": {
+          "name": "keyword",
+          "description": "搜索关键词",
+          "type": "string",
+          "required": true,
+          "url_encode": true
+        }
+      }
+    },
+    {
+      "id": "xiaohongshu_user",
+      "name": "小红书用户主页",
+      "description": "打开小红书用户主页",
+      "scheme": "xhsdiscover",
+      "url_template": "xhsdiscover://user/{user_id}",
+      "category": "social",
+      "enabled": true,
+      "parameters": {
+        "user_id": {
+          "name": "user_id",
+          "description": "用户ID",
+          "type": "string",
+          "required": true,
+          "url_encode": false
+        }
+      }
+    },
+    {
+      "id": "wechat_scan",
+      "name": "微信扫一扫",
+      "description": "打开微信扫一扫功能",
+      "scheme": "weixin",
+      "url_template": "weixin://scanqrcode",
+      "category": "social",
+      "enabled": true,
+      "parameters": {}
+    },
+    {
+      "id": "wechat_pay",
+      "name": "微信支付",
+      "description": "打开微信支付页面",
+      "scheme": "weixin",
+      "url_template": "weixin://wap/pay?prepayid={prepayid}&package={package}&noncestr={noncestr}&timestamp={timestamp}&sign={sign}",
+      "category": "payment",
+      "enabled": true,
+      "parameters": {
+        "prepayid": {
+          "name": "prepayid",
+          "description": "预支付ID",
+          "type": "string",
+          "required": true,
+          "url_encode": false
+        },
+        "package": {
+          "name": "package",
+          "description": "包名",
+          "type": "string",
+          "required": true,
+          "url_encode": false
+        },
+        "noncestr": {
+          "name": "noncestr",
+          "description": "随机字符串",
+          "type": "string",
+          "required": true,
+          "url_encode": false
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "description": "时间戳",
+          "type": "string",
+          "required": true,
+          "url_encode": false
+        },
+        "sign": {
+          "name": "sign",
+          "description": "签名",
+          "type": "string",
+          "required": true,
+          "url_encode": false
+        }
+      }
+    },
+    {
+      "id": "alipay_scan",
+      "name": "支付宝扫一扫",
+      "description": "打开支付宝扫一扫功能",
+      "scheme": "alipays",
+      "url_template": "alipays://platformapi/startapp?saId=10000007",
+      "category": "payment",
+      "enabled": true,
+      "parameters": {}
+    },
+    {
+      "id": "alipay_pay",
+      "name": "支付宝支付",
+      "description": "打开支付宝支付页面",
+      "scheme": "alipays",
+      "url_template": "alipays://platformapi/startapp?appId=20000067&url={url}",
+      "category": "payment",
+      "enabled": true,
+      "parameters": {
+        "url": {
+          "name": "url",
+          "description": "支付URL",
+          "type": "string",
+          "required": true,
+          "url_encode": true
+        }
+      }
+    },
+    {
+      "id": "taobao_search",
+      "name": "淘宝搜索",
+      "description": "在淘宝中搜索商品",
+      "scheme": "taobao",
+      "url_template": "taobao://s.taobao.com?q={keyword}",
+      "category": "shopping",
+      "enabled": true,
+      "parameters": {
+        "keyword": {
+          "name": "keyword",
+          "description": "搜索关键词",
+          "type": "string",
+          "required": true,
+          "url_encode": true
+        }
+      }
+    },
+    {
+      "id": "taobao_product",
+      "name": "淘宝商品详情",
+      "description": "打开淘宝商品详情页",
+      "scheme": "taobao",
+      "url_template": "taobao://item.taobao.com/item.htm?id={item_id}",
+      "category": "shopping",
+      "enabled": true,
+      "parameters": {
+        "item_id": {
+          "name": "item_id",
+          "description": "商品ID",
+          "type": "string",
+          "required": true,
+          "url_encode": false
+        }
+      }
+    },
+    {
+      "id": "douyin_search",
+      "name": "抖音搜索",
+      "description": "在抖音中搜索内容",
+      "scheme": "snssdk1128",
+      "url_template": "snssdk1128://search?keyword={keyword}",
+      "category": "video",
+      "enabled": true,
+      "parameters": {
+        "keyword": {
+          "name": "keyword",
+          "description": "搜索关键词",
+          "type": "string",
+          "required": true,
+          "url_encode": true
+        }
+      }
+    },
+    {
+      "id": "douyin_user",
+      "name": "抖音用户主页",
+      "description": "打开抖音用户主页",
+      "scheme": "snssdk1128",
+      "url_template": "snssdk1128://user/profile/{user_id}",
+      "category": "video",
+      "enabled": true,
+      "parameters": {
+        "user_id": {
+          "name": "user_id",
+          "description": "用户ID",
+          "type": "string",
+          "required": true,
+          "url_encode": false
+        }
+      }
+    },
+    {
+      "id": "bilibili_search",
+      "name": "B站搜索",
+      "description": "在B站中搜索视频",
+      "scheme": "bilibili",
+      "url_template": "bilibili://search?keyword={keyword}",
+      "category": "video",
+      "enabled": true,
+      "parameters": {
+        "keyword": {
+          "name": "keyword",
+          "description": "搜索关键词",
+          "type": "string",
+          "required": true,
+          "url_encode": true
+        }
+      }
+    },
+    {
+      "id": "bilibili_video",
+      "name": "B站视频播放",
+      "description": "播放B站视频",
+      "scheme": "bilibili",
+      "url_template": "bilibili://video/{bv_id}",
+      "category": "video",
+      "enabled": true,
+      "parameters": {
+        "bv_id": {
+          "name": "bv_id",
+          "description": "视频BV号",
+          "type": "string",
+          "required": true,
+          "url_encode": false
+        }
+      }
+    },
+    {
+      "id": "amap_navigation",
+      "name": "高德地图导航",
+      "description": "使用高德地图导航到指定位置",
+      "scheme": "iosamap",
+      "url_template": "iosamap://navi?sourceApplication=zhiwenx&poiname={poiname}&lat={lat}&lon={lon}&dev=0&style=2",
+      "category": "navigation",
+      "enabled": true,
+      "parameters": {
+        "poiname": {
+          "name": "poiname",
+          "description": "目的地名称",
+          "type": "string",
+          "required": true,
+          "url_encode": true
+        },
+        "lat": {
+          "name": "lat",
+          "description": "纬度",
+          "type": "number",
+          "required": true,
+          "url_encode": false,
+          "min": -90,
+          "max": 90
+        },
+        "lon": {
+          "name": "lon",
+          "description": "经度",
+          "type": "number",
+          "required": true,
+          "url_encode": false,
+          "min": -180,
+          "max": 180
+        }
+      }
+    },
+    {
+      "id": "amap_search",
+      "name": "高德地图搜索",
+      "description": "在高德地图中搜索地点",
+      "scheme": "iosamap",
+      "url_template": "iosamap://poi?sourceApplication=zhiwenx&keywords={keywords}&dev=0",
+      "category": "navigation",
+      "enabled": true,
+      "parameters": {
+        "keywords": {
+          "name": "keywords",
+          "description": "搜索关键词",
+          "type": "string",
+          "required": true,
+          "url_encode": true
+        }
+      }
+    },
+    {
+      "id": "baidu_map_navigation",
+      "name": "百度地图导航",
+      "description": "使用百度地图导航到指定位置",
+      "scheme": "baidumap",
+      "url_template": "baidumap://map/direction?destination=name:{poiname}|latlng:{lat},{lon}&mode=driving&src=zhiwenx",
+      "category": "navigation",
+      "enabled": true,
+      "parameters": {
+        "poiname": {
+          "name": "poiname",
+          "description": "目的地名称",
+          "type": "string",
+          "required": true,
+          "url_encode": true
+        },
+        "lat": {
+          "name": "lat",
+          "description": "纬度",
+          "type": "number",
+          "required": true,
+          "url_encode": false,
+          "min": -90,
+          "max": 90
+        },
+        "lon": {
+          "name": "lon",
+          "description": "经度",
+          "type": "number",
+          "required": true,
+          "url_encode": false,
+          "min": -180,
+          "max": 180
+        }
+      }
+    },
+    {
+      "id": "qq_music_search",
+      "name": "QQ音乐搜索",
+      "description": "在QQ音乐中搜索歌曲",
+      "scheme": "qqmusic",
+      "url_template": "qqmusic://today?key={keyword}",
+      "category": "music",
+      "enabled": true,
+      "parameters": {
+        "keyword": {
+          "name": "keyword",
+          "description": "搜索关键词",
+          "type": "string",
+          "required": true,
+          "url_encode": true
+        }
+      }
+    },
+    {
+      "id": "netease_music_search",
+      "name": "网易云音乐搜索",
+      "description": "在网易云音乐中搜索歌曲",
+      "scheme": "orpheus",
+      "url_template": "orpheus://search?keyword={keyword}",
+      "category": "music",
+      "enabled": true,
+      "parameters": {
+        "keyword": {
+          "name": "keyword",
+          "description": "搜索关键词",
+          "type": "string",
+          "required": true,
+          "url_encode": true
+        }
+      }
+    },
+    {
+      "id": "jingdong_search",
+      "name": "京东搜索",
+      "description": "在京东中搜索商品",
+      "scheme": "openapp.jdmobile",
+      "url_template": "openapp.jdmobile://virtual?params={\"category\":\"jump\",\"des\":\"search\",\"keyword\":\"{keyword}\"}",
+      "category": "shopping",
+      "enabled": true,
+      "parameters": {
+        "keyword": {
+          "name": "keyword",
+          "description": "搜索关键词",
+          "type": "string",
+          "required": true,
+          "url_encode": false
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "created_at": "2025-01-25T12:00:00Z",
+    "updated_at": "2025-01-25T12:00:00Z",
+    "description": "ZhiWenX URL Schemes 配置文件",
+    "author": "ZhiWenX Team",
+    "categories": [
+      "social",
+      "payment", 
+      "shopping",
+      "video",
+      "navigation",
+      "music"
+    ]
+  }
+}
