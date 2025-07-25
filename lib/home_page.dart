@@ -221,28 +221,6 @@ class HomePage extends StatelessWidget {
               
               const SizedBox(height: 32),
               
-              // 开发者模式分割线
-              const Divider(
-                thickness: 2,
-                color: Colors.grey,
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // 开发者模式标题
-              const Text(
-                '开发者模式',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              _buildDeveloperModeCard(context),
-              
               // 底部留白，确保最后一个卡片不会贴底
               const SizedBox(height: 32),
             ],
@@ -317,67 +295,5 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildDeveloperModeCard(BuildContext context) {
-    return Card(
-      elevation: 4,
-      color: Colors.grey.shade100,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const DeveloperHomePage()),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Icon(
-                  Icons.developer_mode,
-                  size: 30,
-                  color: Colors.orange,
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '原始功能界面',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '访问队友开发的原始功能界面，用于开发和测试',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.grey.shade400,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
 }

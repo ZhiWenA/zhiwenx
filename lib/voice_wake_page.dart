@@ -7,6 +7,7 @@ import 'tencent_cloud_config.dart';
 import 'voice_recognition_page.dart';
 import 'settings_page.dart';
 import 'app_selection_page.dart';
+import 'home_page.dart';
 
 class VoiceWakePage extends StatefulWidget {
   const VoiceWakePage({super.key});
@@ -41,6 +42,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
   
   int _tapCount = 0;
   DateTime? _lastTapTime;
+  Timer? _resetTimer;
   
   @override
   void initState() {
@@ -145,9 +147,64 @@ class _VoiceWakePageState extends State<VoiceWakePage>
     _scaleController.dispose();
     _pulseController.dispose();
     _voiceQueryTimer?.cancel();
+    _resetTimer?.cancel();
     _controller?.stop();
     _ttsController?.stopPlayback();
     super.dispose();
+  }
+  
+  void _handleDeveloperModeTap() {
+    final now = DateTime.now();
+    
+    // 如果距离上次点击超过2秒，重置计数
+    if (_lastTapTime == null || now.difference(_lastTapTime!).inSeconds > 2) {
+      _tapCount = 1;
+    } else {
+      _tapCount++;
+    }
+    
+    _lastTapTime = now;
+    
+    // 取消之前的重置定时器
+    _resetTimer?.cancel();
+    
+    if (_tapCount >= 3) {
+      // 连续点击三次，进入开发者模式
+      _tapCount = 0;
+      _lastTapTime = null;
+      
+      // 显示提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🔧 进入开发者模式'),
+          duration: Duration(seconds: 1),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      
+      // 延迟一下再跳转，让用户看到提示
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      });
+    } else {
+      // 显示当前点击次数提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('开发者模式 $_tapCount/3'),
+          duration: const Duration(milliseconds: 800),
+          backgroundColor: Colors.grey,
+        ),
+      );
+      
+      // 设置2秒后重置计数的定时器
+      _resetTimer = Timer(const Duration(seconds: 2), () {
+        _tapCount = 0;
+        _lastTapTime = null;
+      });
+    }
   }
 
   Future<void> _startRecognition() async {
@@ -532,9 +589,6 @@ class _VoiceWakePageState extends State<VoiceWakePage>
         child: SafeArea(
           child: Column(
             children: [
-              // 状态栏
-              _buildStatusBar(),
-              
               // 问候语和提示
               _buildGreetingSection(),
               
@@ -554,34 +608,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
     );
   }
 
-  Widget _buildStatusBar() {
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '9:41',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF070B11),
-            ),
-          ),
-          Row(
-            children: [
-              Icon(Icons.signal_cellular_4_bar, size: 16, color: Color(0xFF070B11)),
-              SizedBox(width: 6),
-              Icon(Icons.wifi, size: 16, color: Color(0xFF070B11)),
-              SizedBox(width: 6),
-              Icon(Icons.battery_3_bar, size: 16, color: Color(0xFF070B11)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildGreetingSection() {
     return Padding(
@@ -597,38 +624,25 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                _isVoiceQuerying 
-                  ? (_currentQueryType == 'phone' ? '请说出联系人姓名' : '请说出联系人姓名')
-                  : '或点击下方按钮进行通话',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: _isVoiceQuerying ? const Color(0xFFE74C3C) : const Color(0xFFA49D9A),
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (!_isVoiceQuerying)
-                GestureDetector(
-                  onTap: () {
-                    // 播放提示音
-                  },
-                  child: const Icon(
-                    Icons.volume_up,
-                    color: Color(0xFF76A4A5),
-                    size: 20,
+          if (_isVoiceQuerying)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _currentQueryType == 'phone' ? '请说出联系人姓名' : '请说出联系人姓名',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Color(0xFFE74C3C),
                   ),
                 ),
-              if (_isVoiceQuerying)
+                const SizedBox(width: 8),
                 const Icon(
                   Icons.mic,
                   color: Color(0xFFE74C3C),
                   size: 20,
                 ),
-            ],
-          ),
+              ],
+            ),
           // 添加滑动提示 - 使用动画和语音
           if (!_isVoiceQuerying)
             Padding(
@@ -662,9 +676,9 @@ class _VoiceWakePageState extends State<VoiceWakePage>
                             Text(
                               '按住说话',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 20,
                                 color: const Color(0xFF76A4A5),
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -843,6 +857,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
                 children: [
                   _buildNavItem(Icons.phone, true, 'phone'),
                   _buildNavItem(Icons.videocam, true, 'video'),
+                  _buildDeveloperNavItem(),
                 ],
               ),
           ),
@@ -904,6 +919,48 @@ class _VoiceWakePageState extends State<VoiceWakePage>
               color: isCurrentlyActive 
                 ? const Color(0xFFE74C3C)
                 : (isActive ? const Color(0xFF76A4A5) : Colors.transparent),
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeveloperNavItem() {
+    return GestureDetector(
+      onTap: () {
+        _handleDeveloperModeTap();
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.orange.withOpacity(0.3), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 3,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.developer_mode,
+              size: 30,
+              color: Colors.orange,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: 24,
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.orange,
               borderRadius: BorderRadius.circular(3),
             ),
           ),
