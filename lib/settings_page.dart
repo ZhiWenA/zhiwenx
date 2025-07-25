@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:flutter/services.dart';
+import 'home_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -14,6 +17,9 @@ class _SettingsPageState extends State<SettingsPage> {
   String _voiceSensitivity = '中';
   String _videoApp = '抖音';
   String _musicApp = '网易云音乐';
+  
+  int _tapCount = 0;
+  DateTime? _lastTapTime;
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +40,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // 设置入口提示
-                    _buildInfoCard(),
-                    
-                    const SizedBox(height: 24),
-                    
                     // 基本设置
                     _buildBasicSettings(),
                     
@@ -64,7 +65,131 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildStatusBar() {
+  Widget _buildDeveloperModeEntry() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: GestureDetector(
+        onTap: _handleDeveloperModeTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Colors.orange.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.developer_mode,
+                color: Colors.orange,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '开发者模式',
+                style: TextStyle(
+                  color: Colors.orange,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleDeveloperModeTap() {
+    final now = DateTime.now();
+    
+    // 如果距离上次点击超过2秒，重置计数
+    if (_lastTapTime == null || now.difference(_lastTapTime!).inSeconds > 2) {
+      _tapCount = 1;
+    } else {
+      _tapCount++;
+    }
+    
+    _lastTapTime = now;
+    
+    if (_tapCount >= 3) {
+      // 连续点击三次，进入开发者模式
+      _tapCount = 0;
+      _lastTapTime = null;
+      
+      // 显示提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🔧 进入开发者模式'),
+          duration: Duration(seconds: 1),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      
+      // 延迟一下再跳转，让用户看到提示
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      });
+    } else {
+      // 显示当前点击次数提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('开发者模式 $_tapCount/3'),
+          duration: const Duration(milliseconds: 800),
+          backgroundColor: Colors.grey,
+        ),
+      );
+    }
+   }
+
+   // 设置系统音量
+    void _setSystemVolume(double volume) {
+      try {
+        // 在实际应用中，这里会调用原生代码来设置系统音量
+        // 静默设置，不显示提醒
+        print('音量设置为: ${(volume * 100).round()}%');
+      } catch (e) {
+        print('设置音量失败: $e');
+      }
+    }
+
+   // 设置系统亮度
+    void _setSystemBrightness(double brightness) {
+      try {
+        // 在实际应用中，这里会调用原生代码来设置系统亮度
+        // 静默设置，不显示提醒
+        print('亮度设置为: ${(brightness * 100).round()}%');
+      } catch (e) {
+        print('设置亮度失败: $e');
+      }
+    }
+
+   // 设置系统字体大小
+   void _setSystemFontSize(String fontSize) {
+     try {
+       // 在实际应用中，这里会调用原生代码来设置系统字体大小
+       // 目前显示设置反馈
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('字体大小已设置为: $fontSize'),
+           duration: const Duration(milliseconds: 800),
+           backgroundColor: const Color(0xFF76A4A5),
+         ),
+       );
+     } catch (e) {
+       print('设置字体大小失败: $e');
+     }
+   }
+ 
+   Widget _buildStatusBar() {
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -134,46 +259,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildInfoCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: Color(0xFF76A4A5),
-                size: 20,
-              ),
-              SizedBox(width: 8),
-              Text(
-                '设置入口',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            '在主界面连续点击五次进入设置界面',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFFA49D9A),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildBasicSettings() {
     return Container(
@@ -202,7 +288,10 @@ class _SettingsPageState extends State<SettingsPage> {
             _volume,
             Icons.volume_down,
             Icons.volume_up,
-            (value) => setState(() => _volume = value),
+            (value) {
+              setState(() => _volume = value);
+              _setSystemVolume(value);
+            },
           ),
           
           const SizedBox(height: 24),
@@ -213,7 +302,10 @@ class _SettingsPageState extends State<SettingsPage> {
             _brightness,
             Icons.brightness_low,
             Icons.brightness_high,
-            (value) => setState(() => _brightness = value),
+            (value) {
+              setState(() => _brightness = value);
+              _setSystemBrightness(value);
+            },
           ),
           
           const SizedBox(height: 24),
@@ -223,7 +315,10 @@ class _SettingsPageState extends State<SettingsPage> {
             '字体大小',
             _fontSize,
             ['标准', '大', '特大'],
-            (value) => setState(() => _fontSize = value),
+            (value) {
+              setState(() => _fontSize = value);
+              _setSystemFontSize(value);
+            },
           ),
         ],
       ),
@@ -522,6 +617,9 @@ class _SettingsPageState extends State<SettingsPage> {
       color: const Color(0xFFF9F7F5),
       child: Column(
         children: [
+          // 开发者模式入口
+          _buildDeveloperModeEntry(),
+          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: SizedBox(
