@@ -1,0 +1,256 @@
+{
+  "xiaohongshu_search": {
+    "name": "小红书搜索AdventureX",
+    "description": "打开小红书并搜索关键词AdventureX",
+    "steps": [
+      {
+        "type": "launchApp",
+        "description": "启动小红书",
+        "appPackage": "com.xingin.xhs",
+        "timeout": 5000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待搜索图标出现",
+        "selector": {
+          "byResourceId": "com.xingin.xhs:id/search_icon",
+          "byContentDescription": "搜索"
+        },
+        "timeout": 10000
+      },
+      {
+        "type": "click",
+        "description": "点击搜索图标",
+        "selector": {
+          "byResourceId": "com.xingin.xhs:id/search_icon"
+        },
+        "timeout": 3000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待搜索框出现",
+        "selector": {
+          "byClassName": "android.widget.EditText"
+        },
+        "timeout": 5000
+      },
+      {
+        "type": "input",
+        "description": "输入搜索关键词",
+        "selector": {
+          "byClassName": "android.widget.EditText"
+        },
+        "inputText": "AdventureX",
+        "timeout": 3000
+      },
+      {
+        "type": "keyEvent",
+        "description": "按回车键执行搜索",
+        "keyCode": 66,
+        "timeout": 1000
+      }
+    ]
+  },
+  "douyin_search": {
+    "name": "抖音搜索AdventureX",
+    "description": "打开抖音并搜索关键词AdventureX",
+    "steps": [
+      {
+        "type": "launchApp",
+        "description": "启动抖音",
+        "appPackage": "com.ss.android.ugc.aweme",
+        "timeout": 5000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待搜索图标",
+        "selector": {
+          "byContentDescription": "搜索"
+        },
+        "timeout": 10000
+      },
+      {
+        "type": "click",
+        "description": "点击搜索",
+        "selector": {
+          "byContentDescription": "搜索"
+        },
+        "timeout": 3000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待搜索框",
+        "selector": {
+          "byClassName": "android.widget.EditText"
+        },
+        "timeout": 5000
+      },
+      {
+        "type": "input",
+        "description": "输入关键词",
+        "inputText": "AdventureX",
+        "timeout": 3000
+      },
+      {
+        "type": "keyEvent",
+        "description": "执行搜索",
+        "keyCode": 66,
+        "timeout": 1000
+      }
+    ]
+  },
+  "taobao_search": {
+    "name": "淘宝搜索AdventureX",
+    "description": "打开淘宝并搜索商品AdventureX",
+    "steps": [
+      {
+        "type": "launchApp",
+        "description": "启动淘宝",
+        "appPackage": "com.taobao.taobao",
+        "timeout": 5000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待搜索框",
+        "selector": {
+          "byText": "搜索"
+        },
+        "timeout": 10000
+      },
+      {
+        "type": "click",
+        "description": "点击搜索框",
+        "selector": {
+          "byText": "搜索"
+        },
+        "timeout": 3000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待输入框",
+        "selector": {
+          "byClassName": "android.widget.EditText"
+        },
+        "timeout": 5000
+      },
+      {
+        "type": "input",
+        "description": "输入商品名",
+        "inputText": "AdventureX",
+        "timeout": 3000
+      },
+      {
+        "type": "keyEvent",
+        "description": "执行搜索",
+        "keyCode": 66,
+        "timeout": 1000
+      }
+    ]
+  },
+  "weibo_search": {
+    "name": "微博搜索AdventureX",
+    "description": "打开微博并搜索关键词AdventureX",
+    "steps": [
+      {
+        "type": "launchApp",
+        "description": "启动微博",
+        "appPackage": "com.sina.weibo",
+        "timeout": 5000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待搜索图标",
+        "selector": {
+          "byContentDescription": "搜索"
+        },
+        "timeout": 10000
+      },
+      {
+        "type": "click",
+        "description": "点击搜索图标",
+        "selector": {
+          "byContentDescription": "搜索"
+        },
+        "timeout": 3000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待搜索框",
+        "selector": {
+          "byClassName": "android.widget.EditText"
+        },
+        "timeout": 5000
+      },
+      {
+        "type": "input",
+        "description": "输入关键词",
+        "inputText": "AdventureX",
+        "timeout": 3000
+      },
+      {
+        "type": "keyEvent",
+        "description": "执行搜索",
+        "keyCode": 66,
+        "timeout": 1000
+      }
+    ]
+  },
+  "generic_app_template": {
+    "name": "通用应用搜索模板",
+    "description": "通用的应用搜索流程模板，可以根据具体应用调整选择器",
+    "steps": [
+      {
+        "type": "launchApp",
+        "description": "启动目标应用",
+        "appPackage": "com.example.app",
+        "timeout": 5000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待界面加载",
+        "selector": {
+          "byClassName": "android.view.ViewGroup"
+        },
+        "timeout": 8000
+      },
+      {
+        "type": "click",
+        "description": "点击搜索入口",
+        "selector": {
+          "byContentDescription": "搜索",
+          "byText": "搜索",
+          "byResourceId": "search_icon"
+        },
+        "timeout": 3000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待搜索框出现",
+        "selector": {
+          "byClassName": "android.widget.EditText"
+        },
+        "timeout": 5000
+      },
+      {
+        "type": "input",
+        "description": "输入搜索内容",
+        "inputText": "搜索关键词",
+        "timeout": 3000
+      },
+      {
+        "type": "keyEvent",
+        "description": "执行搜索",
+        "keyCode": 66,
+        "timeout": 1000
+      },
+      {
+        "type": "waitForElement",
+        "description": "等待搜索结果",
+        "selector": {
+          "byClassName": "androidx.recyclerview.widget.RecyclerView"
+        },
+        "timeout": 10000
+      }
+    ]
+  }
+}

@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">智问X</string>
     <string name="accessibility_service_description">智问X无障碍服务，用于辅助用户通过语音控制手机操作</string>
+    <string name="smart_accessibility_service_description">智问X - 智能辅助服务\n\n📱 主要功能：\n• 无障碍事件监听与处理\n• 录制用户操作行为（点击、输入、滑动等）\n• 跨设备自动化操作回放\n• 智能应用启动和操作序列记录\n• 语音控制手机操作辅助\n\n🔒 隐私保护：\n• 仅在用户主动启用功能时收集数据\n• 所有数据仅保存在本地设备\n• 自动排除系统应用和敏感操作\n• 不会上传任何个人信息\n\n⚙️ 使用方式：\n• 开启此服务后可使用各项智能辅助功能\n• 支持悬浮窗快速控制\n• 录制完成后可在其他设备回放\n• 语音助手功能增强\n\n⚠️ 重要提醒：\n• 请勿录制包含密码等敏感信息的操作\n• 建议录制前回到目标应用主页\n• 可随时关闭此服务停止所有功能</string>
 </resources>

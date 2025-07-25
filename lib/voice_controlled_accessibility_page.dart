@@ -6,6 +6,7 @@ import 'package:flutter_accessibility_service/constants.dart';
 import 'package:flutter_accessibility_service/flutter_accessibility_service.dart';
 import 'package:asr_plugin/asr_plugin.dart';
 import 'tencent_cloud_config.dart';
+import 'utils/accessibility_permission_manager.dart';
 
 class VoiceControlledAccessibilityPage extends StatefulWidget {
   const VoiceControlledAccessibilityPage({super.key});
@@ -98,14 +99,17 @@ class _VoiceControlledAccessibilityPageState extends State<VoiceControlledAccess
   }
 
   Future<void> _checkAccessibilityPermission() async {
-    final isEnabled = await FlutterAccessibilityService.isAccessibilityPermissionEnabled();
+    final isEnabled = await AccessibilityPermissionManager.checkPermission();
     setState(() {
       _isAccessibilityEnabled = isEnabled;
     });
   }
 
   Future<void> _requestAccessibilityPermission() async {
-    final granted = await FlutterAccessibilityService.requestAccessibilityPermission();
+    final granted = await AccessibilityPermissionManager.checkAndRequestPermission(
+      context,
+      feature: '语音无障碍控制',
+    );
     setState(() {
       _isAccessibilityEnabled = granted;
     });

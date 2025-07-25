@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter_accessibility_service/accessibility_event.dart';
 import 'package:flutter_accessibility_service/constants.dart';
 import 'package:flutter_accessibility_service/flutter_accessibility_service.dart';
+import 'utils/accessibility_permission_manager.dart';
 import 'dart:developer';
 
 /// 无障碍浮层覆盖入口点
@@ -282,6 +283,17 @@ class _ActionRecordingPageState extends State<ActionRecordingPage> {
   }
   
   Future<void> _startRecording() async {
+    // 先检查无障碍权限
+    final hasPermission = await AccessibilityPermissionManager.checkAndRequestPermission(
+      context,
+      feature: '操作录制',
+    );
+    
+    if (!hasPermission) {
+      _showSnackBar('需要无障碍权限才能开始录制', Colors.red);
+      return;
+    }
+
     try {
       await actionPlatform.invokeMethod('startRecording');
     } catch (e) {
@@ -322,6 +334,17 @@ class _ActionRecordingPageState extends State<ActionRecordingPage> {
   }
   
   Future<void> _executeRecording(String? filename) async {
+    // 先检查无障碍权限
+    final hasPermission = await AccessibilityPermissionManager.checkAndRequestPermission(
+      context,
+      feature: '录制回放',
+    );
+    
+    if (!hasPermission) {
+      _showSnackBar('需要无障碍权限才能执行录制回放', Colors.red);
+      return;
+    }
+
     try {
       if (filename != null) {
         await actionPlatform.invokeMethod('executeRecording', {'filename': filename});
