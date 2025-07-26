@@ -46,12 +46,7 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
       }
     });
     
-    // 3秒后自动跳转
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        _confirmAndOpen();
-      }
-    });
+    // 移除自动跳转，让用户手动选择
   }
   
 
@@ -140,12 +135,12 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
     
     if (text.startsWith('phone:')) {
       String contactName = text.substring(6); // 移除 'phone:' 前缀
-      message = '即将为您拨打${contactName}的电话';
+      message = '是否要拨打${contactName}的电话？';
     } else if (text.startsWith('video:')) {
       String contactName = text.substring(6); // 移除 'video:' 前缀
-      message = '即将为您打开与${contactName}的微信视频通话';
+      message = '是否要打开与${contactName}的微信视频通话？';
     } else {
-      message = '即将前往$_selectedApp';
+      message = '是否要打开$_selectedApp搜索${widget.recognizedText}？';
     }
     
     TTSController.instance.synthesize(message, null);
@@ -209,8 +204,8 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
       }
     }
     
-    // 延迟后返回主页
-    Future.delayed(const Duration(seconds: 2), () {
+    // 成功启动应用后返回主页
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         Navigator.popUntil(context, (route) => route.isFirst);
       }
@@ -218,7 +213,7 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
   }
 
   void _cancel() {
-    Navigator.pop(context);
+    Navigator.popUntil(context, (route) => route.isFirst);
   }
 
   @override
@@ -226,278 +221,105 @@ class _AppSelectionPageState extends State<AppSelectionPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9F7F5),
       body: SafeArea(
-        child: Column(
-          children: [
-            // 状态栏
-            _buildStatusBar(),
-            
-            // 主要内容
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 识别结果显示
-                    _buildRecognitionResult(),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // 应用选择卡片
-                    _buildAppSelectionCard(),
-                  ],
-                ),
-              ),
-            ),
-            
-            // 底部按钮
-            _buildBottomButtons(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusBar() {
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '9:41',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF5D5753),
-            ),
-          ),
-          Row(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.signal_cellular_4_bar, size: 16, color: Color(0xFF5D5753)),
-              SizedBox(width: 6),
-              Icon(Icons.wifi, size: 16, color: Color(0xFF5D5753)),
-              SizedBox(width: 6),
-              Icon(Icons.battery_3_bar, size: 16, color: Color(0xFF5D5753)),
+              // 主要确认文本
+              _buildConfirmationText(),
+              
+              const SizedBox(height: 80),
+              
+              // 底部按钮
+              _buildActionButtons(),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildRecognitionResult() {
+  Widget _buildConfirmationText() {
+    String confirmationText = '';
+    final text = widget.recognizedText.toLowerCase();
+    
+    if (text.startsWith('phone:')) {
+      String contactName = text.substring(6);
+      confirmationText = '是否要拨打${contactName}的电话？';
+    } else if (text.startsWith('video:')) {
+      String contactName = text.substring(6);
+      confirmationText = '是否要打开与${contactName}的微信视频通话？';
+    } else {
+      confirmationText = '是否要打开$_selectedApp搜索${widget.recognizedText}？';
+    }
+    
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '您说的是：',
-          style: TextStyle(
-            fontSize: 18,
-            color: Color(0xFFA49D9A),
+        Text(
+          confirmationText,
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF5D5753),
           ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                widget.recognizedText,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF5D5753),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            GestureDetector(
-              onTap: _playText,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF76A4A5),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  _isSynthesizing ? Icons.stop : Icons.volume_up,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-            ),
-          ],
+          textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
-  Widget _buildAppSelectionCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha:0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Text(
-            '即将为您打开',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF5D5753),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // 应用图标和名称
-          Column(
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.red, // 小红书的红色
-                ),
-                child: const Icon(
-                  Icons.book,
-                  size: 40,
-                  color: Colors.white,
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        // 取消按钮（打叉）
+        Expanded(
+          child: SizedBox(
+            height: 80,
+            child: ElevatedButton(
+              onPressed: _cancel,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                elevation: 3,
+                shadowColor: Colors.black.withValues(alpha: 0.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                _selectedApp,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF5D5753),
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 24),
-          
-          Text(
-            '搜索：${widget.recognizedText}',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF76A4A5),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomButtons() {
-    return Container(
-      color: const Color(0xFFF9F7F5),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 48),
-            child: Column(
-              children: [
-                // 确认按钮
-                SizedBox(
-                  width: double.infinity,
-                  height: 64,
-                  child: ElevatedButton(
-                    onPressed: _confirmAndOpen,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF76A4A5),
-                      foregroundColor: Colors.white,
-                      elevation: 3,
-                      shadowColor: Colors.black.withValues(alpha:0.1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.check, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          '确认并打开',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // 取消按钮
-                SizedBox(
-                  width: double.infinity,
-                  height: 64,
-                  child: ElevatedButton(
-                    onPressed: _cancel,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF9F7F5),
-                      foregroundColor: const Color(0xFF5D5753),
-                      elevation: 3,
-                      shadowColor: Colors.black.withValues(alpha:0.1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.close, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          '取消',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            height: 34,
-            child: Center(
-              child: Container(
-                width: 134,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFA49D9A),
-                  borderRadius: BorderRadius.circular(3),
-                ),
+              child: const Icon(
+                Icons.close,
+                size: 40,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+        
+        const SizedBox(width: 24),
+        
+        // 确认按钮（打勾）
+        Expanded(
+          child: SizedBox(
+            height: 80,
+            child: ElevatedButton(
+              onPressed: _confirmAndOpen,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                elevation: 3,
+                shadowColor: Colors.black.withValues(alpha: 0.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Icon(
+                Icons.check,
+                size: 40,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

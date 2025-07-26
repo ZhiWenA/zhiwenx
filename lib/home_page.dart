@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zhiwenx/contacts_page.dart';
-import 'chat_page.dart';
 import 'smart_recording_page.dart';
-import 'voice_assistant_page.dart';
-import 'voice_wake_page.dart';
 import 'automation_rule_page.dart';
 import 'global_widget_capture_page.dart';
 import 'global_capture_test_page.dart';
@@ -64,37 +61,6 @@ class HomePage extends StatelessWidget {
               ),
               
               // 功能卡片列表
-              _buildFeatureCard(
-                context,
-                title: '语音助手',
-                subtitle: '语音识别 + 语音合成一体化体验',
-                icon: Icons.assistant,
-                color: Colors.deepPurple,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const VoiceAssistantPage()),
-                  );
-                },
-              ),
-              
-              const SizedBox(height: 16),
-              
-              _buildFeatureCard(
-                context,
-                title: 'AI 对话',
-                subtitle: '与大模型进行智能对话',
-                icon: Icons.chat_bubble_outline,
-                color: Colors.blue,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ChatPage()),
-                  );
-                },
-              ),
-              
-              const SizedBox(height: 16),
               
               _buildFeatureCard(
                 context,
@@ -273,21 +239,7 @@ class HomePage extends StatelessWidget {
               
               const SizedBox(height: 16),
               
-              _buildFeatureCard(
-                context,
-                title: '老人语音助手界面',
-                subtitle: '专为老年人设计的语音交互界面',
-                icon: Icons.elderly,
-                color: const Color(0xFF76A4A5),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const VoiceWakePage()),
-                  );
-                },
-              ),
-              
-              const SizedBox(height: 16),
+
               
               _buildFeatureCard(
                 context,
