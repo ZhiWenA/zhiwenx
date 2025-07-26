@@ -7,7 +7,9 @@ import 'package:tts_plugin/tts_plugin.dart';
 import 'dart:developer';
 import 'tencent_cloud_config.dart';
 import 'settings_page.dart';
-import 'app_selection_page.dart';
+import 'chat_models.dart';
+import 'enhanced_openai_service_v2.dart';
+import 'openai_config.dart';
 
 class VoiceWakePage extends StatefulWidget {
   const VoiceWakePage({super.key});
@@ -40,6 +42,14 @@ class _VoiceWakePageState extends State<VoiceWakePage>
   // ignore: unused_field
   String? _activeNavItem;
   
+  // AI对话相关
+  final List<ChatMessage> _messages = [];
+  bool _isAIResponding = false;
+  bool _isConnected = false;
+  StreamSubscription<String>? _aiStreamSubscription;
+  String _aiResponse = "";
+  bool _autoPlayAIResponse = true;
+  
   int _tapCount = 0;
   DateTime? _lastTapTime;
   Timer? _resetTimer;
@@ -50,6 +60,37 @@ class _VoiceWakePageState extends State<VoiceWakePage>
     _initializeAnimations();
     _initializeASR();
     _initializeTTS();
+    _checkAIConnection();
+    _initializeAIService();
+    _addSystemMessage();
+  }
+
+  // 检查AI连接状态
+  void _checkAIConnection() async {
+    setState(() {
+      _isConnected = OpenAIConfig.isConfigured;
+    });
+    
+    if (_isConnected) {
+      final connected = await EnhancedOpenAIService.testConnection();
+      setState(() {
+        _isConnected = connected;
+      });
+    }
+  }
+
+  // 初始化AI服务
+  void _initializeAIService() async {
+    try {
+      await EnhancedOpenAIService.initialize();
+    } catch (e) {
+      print('AI服务初始化失败: $e');
+    }
+  }
+
+  // 添加系统消息
+  void _addSystemMessage() {
+    _messages.add(ChatMessage.system('你是一个智能语音助手，请用简洁、自然的中文回答问题。如果用户需要执行某些操作（如打电话、发短信、打开应用等），你可以使用相应的工具来帮助用户完成。'));
   }
 
   void _initializeAnimations() {
@@ -148,6 +189,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
     _pulseController.dispose();
     _voiceQueryTimer?.cancel();
     _resetTimer?.cancel();
+    _aiStreamSubscription?.cancel();
     _controller?.stop();
     _ttsController?.stopPlayback();
     super.dispose();
@@ -239,7 +281,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
           }
           break;
         case ASRDataType.SUCCESS:
-          // 最终结果，准备跳转
+          // 最终结果，发送给AI
           recognizedText = data.result ?? '';
           if (recognizedText.isNotEmpty) {
             setState(() {
@@ -248,15 +290,10 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             });
             log("最终识别: $recognizedText");
             
-            // 延迟一下让用户看到最终结果，然后跳转
+            // 延迟一下让用户看到最终结果，然后发送给AI
             Future.delayed(const Duration(milliseconds: 800), () {
               if (mounted) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AppSelectionPage(recognizedText: recognizedText),
-                  ),
-                );
+                _sendToAI(recognizedText);
               }
             });
           }
@@ -286,18 +323,99 @@ class _VoiceWakePageState extends State<VoiceWakePage>
     _micController.reverse();
     _pulseController.repeat(reverse: true);
     
-    // 只有在有有效识别结果时才跳转到应用选择页面
+    // 只有在有有效识别结果时才发送给AI
     if (_hasValidResult && _result.isNotEmpty) {
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AppSelectionPage(recognizedText: _result),
-            ),
-          );
+          _sendToAI(_result);
         }
       });
+    }
+  }
+
+  // 发送消息给AI
+  Future<void> _sendToAI(String userMessage) async {
+    if (userMessage.trim().isEmpty || _isAIResponding || !_isConnected) {
+      return;
+    }
+
+    // 添加用户消息到对话历史
+    final userChatMessage = ChatMessage.user(userMessage);
+    setState(() {
+      _messages.add(userChatMessage);
+      _isAIResponding = true;
+      _aiResponse = "";
+    });
+
+    // 启动AI响应动画
+    _pulseController.stop();
+    _waveController.repeat();
+
+    try {
+      // 取消之前的AI流订阅
+      await _aiStreamSubscription?.cancel();
+      
+      // 使用增强的OpenAI服务
+      final stream = EnhancedOpenAIService.sendStreamChatRequest(_messages);
+      String fullContent = '';
+      
+      _aiStreamSubscription = stream.listen(
+        (chunk) {
+          fullContent += chunk;
+          setState(() {
+            _aiResponse = fullContent;
+          });
+        },
+        onError: (error) {
+          print('AI响应错误: ${error.toString()}');
+          setState(() {
+            _aiResponse = "抱歉，AI服务暂时不可用，请稍后再试。";
+            _isAIResponding = false;
+          });
+          // 停止动画
+          _waveController.stop();
+          _pulseController.repeat(reverse: true);
+        },
+        onDone: () {
+          setState(() {
+            _isAIResponding = false;
+          });
+          
+          // 停止动画
+          _waveController.stop();
+          _pulseController.repeat(reverse: true);
+          
+          // 添加AI回复到对话历史
+          if (fullContent.trim().isNotEmpty) {
+            _messages.add(ChatMessage.assistant(fullContent));
+            
+            // 自动播放AI回复
+            if (_autoPlayAIResponse) {
+              _playAIResponse(fullContent);
+            }
+          }
+        },
+      );
+    } catch (e) {
+      print('发送AI请求失败: ${e.toString()}');
+      setState(() {
+        _aiResponse = "抱歉，AI服务暂时不可用，请稍后再试。";
+        _isAIResponding = false;
+      });
+      // 停止动画
+      _waveController.stop();
+      _pulseController.repeat(reverse: true);
+    }
+  }
+
+  // 播放AI回复
+  Future<void> _playAIResponse(String text) async {
+    if (text.trim().isNotEmpty) {
+      try {
+        await _ttsController?.synthesize(text, null);
+      } catch (e) {
+        print('TTS播放失败: $e');
+      }
     }
   }
   
@@ -360,7 +478,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
   }
 
   void _handleNavItemTap(IconData icon) async {
-    String itemType = 'phone';
+    String itemType = 'general';
     
     if (_isVoiceQuerying) {
       // 如果正在录音且点击的是同一个按钮，则取消录音
@@ -371,9 +489,9 @@ class _VoiceWakePageState extends State<VoiceWakePage>
       return; // 防止重复点击不同按钮
     }
     
-    if (icon == Icons.phone) {
-      // 电话功能
-      await _startVoiceQuery('你要给谁打电话？', 'phone');
+    if (icon == Icons.psychology) {
+      // AI助手功能 - 直接开始语音识别
+      await _startVoiceQuery('请说出您的需求，我是您的AI助手', 'general');
     }
   }
 
@@ -474,7 +592,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
         }
         break;
       case ASRDataType.SUCCESS:
-        // 最终结果，处理查询
+        // 最终结果，发送给AI
         recognizedText = data.result ?? '';
         if (recognizedText.isNotEmpty) {
           setState(() {
@@ -482,7 +600,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
           });
           log("语音查询最终识别: $recognizedText");
           
-          // 处理最终结果
+          // 发送给AI处理
           if (recognizedText.trim().isNotEmpty) {
             _processVoiceQueryResult(recognizedText, actionType);
           }
@@ -549,29 +667,17 @@ class _VoiceWakePageState extends State<VoiceWakePage>
   // 播放操作提示语音
   void _playInstructionVoice() async {
     try {
-      await _ttsController?.synthesize('按住语音按钮并轻轻滑动开始录音，或者点击下方的电话按钮进行通话', null);
+      await _ttsController?.synthesize('按住语音按钮开始录音，AI将智能理解您的需求并提供帮助', null);
     } catch (e) {
       print('TTS播放失败: $e');
     }
   }
 
-  void _processVoiceQueryResult(String name, String actionType) async {
+  void _processVoiceQueryResult(String text, String actionType) async {
     await _stopVoiceQuery();
     
-    if (name.trim().isEmpty) {
+    if (text.trim().isEmpty) {
       return;
-    }
-    
-    // 构造传递给AppSelectionPage的文本格式
-    String recognizedText = 'phone:$name';
-    
-    // 播放确认信息
-    String confirmMessage = '正在为您查找${name}的电话';
-    
-    try {
-      await _ttsController?.synthesize(confirmMessage, null);
-    } catch (e) {
-      print('TTS播放失败: $e');
     }
     
     // 重置语音查询状态
@@ -580,18 +686,10 @@ class _VoiceWakePageState extends State<VoiceWakePage>
       _currentQueryType = '';
     });
     
-    // 模拟跳转到相应应用
-    await Future.delayed(const Duration(milliseconds: 1000));
-    
+    // 发送给AI处理
+    await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => AppSelectionPage(
-            recognizedText: recognizedText,
-          ),
-        ),
-      );
+      _sendToAI(text);
     }
   }
 
@@ -631,11 +729,13 @@ class _VoiceWakePageState extends State<VoiceWakePage>
       child: Column(
         children: [
           Text(
-            _isVoiceQuerying ? '正在录音中...' : '请说出您的需求',
+            _isVoiceQuerying ? '正在录音中...' : 
+            _isAIResponding ? 'AI正在思考...' : '请说出您的需求',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w600,
-              color: _isVoiceQuerying ? const Color(0xFFE74C3C) : const Color(0xFF76A4A5),
+              color: _isVoiceQuerying ? const Color(0xFFE74C3C) : 
+                     _isAIResponding ? const Color(0xFF3498DB) : const Color(0xFF76A4A5),
             ),
           ),
           const SizedBox(height: 8),
@@ -644,7 +744,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  _currentQueryType == 'phone' ? '请说出联系人姓名' : '请说出联系人姓名',
+                  _currentQueryType == 'phone' ? '请说出联系人姓名' : '请说出您的需求',
                   style: const TextStyle(
                     fontSize: 18,
                     color: Color(0xFFE74C3C),
@@ -659,8 +759,86 @@ class _VoiceWakePageState extends State<VoiceWakePage>
               ],
             ),
           
+          // AI回复展示区域
+          if (_isAIResponding || _aiResponse.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              constraints: const BoxConstraints(
+                minHeight: 60,
+                maxWidth: 320,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF3498DB).withValues(alpha: 0.3),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF3498DB).withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3498DB),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "AI回复",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: const Color(0xFF3498DB),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (_isAIResponding) ...[
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              const Color(0xFF3498DB),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _aiResponse.isNotEmpty ? _aiResponse : "AI正在思考中，请稍候...",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: _aiResponse.isNotEmpty ? const Color(0xFF2C3E50) : const Color(0xFF95A5A6),
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 6,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          
           // 实时识别结果显示区域
-          if (_isRecognizing || _isVoiceQuerying)
+          if ((_isRecognizing || _isVoiceQuerying) && !_isAIResponding)
             Container(
               margin: const EdgeInsets.only(top: 16),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -725,7 +903,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             ),
           
           // 添加滑动提示 - 使用动画和语音
-          if (!_isVoiceQuerying && !_isRecognizing)
+          if (!_isVoiceQuerying && !_isRecognizing && !_isAIResponding)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: GestureDetector(
@@ -770,6 +948,33 @@ class _VoiceWakePageState extends State<VoiceWakePage>
                 ),
               ),
             ),
+            
+          // 连接状态指示器
+          if (!_isConnected)
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.warning, color: Colors.red.shade700, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'AI服务未连接',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.red.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -777,9 +982,9 @@ class _VoiceWakePageState extends State<VoiceWakePage>
 
   Widget _buildVoiceButton() {
     return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
+      onTapDown: _isAIResponding ? null : _onTapDown,
+      onTapUp: _isAIResponding ? null : _onTapUp,
+      onTapCancel: _isAIResponding ? null : _onTapCancel,
       child: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, child) {
@@ -793,14 +998,14 @@ class _VoiceWakePageState extends State<VoiceWakePage>
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // 外层波纹 - 只在录音时显示
-                    if (_isRecognizing) ..._buildWaveAnimations(),
+                    // 外层波纹 - 录音或AI响应时显示
+                    if (_isRecognizing || _isAIResponding) ..._buildWaveAnimations(),
                     
                     // 中心麦克风按钮
                     _buildMicrophoneButton(),
                     
                     // 状态提示
-                    if (_isRecognizing) _buildStatusHint(),
+                    if (_isRecognizing || _isAIResponding) _buildStatusHint(),
                   ],
                 ),
               ),
@@ -812,6 +1017,9 @@ class _VoiceWakePageState extends State<VoiceWakePage>
   }
   
   List<Widget> _buildWaveAnimations() {
+    // AI响应时使用蓝色波纹，录音时使用绿色波纹
+    Color waveColor = _isAIResponding ? const Color(0xFF3498DB) : const Color(0xFF76A4A5);
+    
     return [
       // 外层波纹
       AnimatedBuilder(
@@ -824,7 +1032,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF76A4A5).withValues(alpha:opacity),
+              color: waveColor.withValues(alpha:opacity),
             ),
           );
         },
@@ -841,7 +1049,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF76A4A5).withValues(alpha:opacity),
+              color: waveColor.withValues(alpha:opacity),
             ),
           );
         },
@@ -858,7 +1066,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF76A4A5).withValues(alpha:opacity),
+              color: waveColor.withValues(alpha:opacity),
             ),
           );
         },
@@ -867,22 +1075,28 @@ class _VoiceWakePageState extends State<VoiceWakePage>
   }
   
   Widget _buildMicrophoneButton() {
+    Color buttonColor = _isAIResponding ? const Color(0xFF3498DB) : 
+                       _isRecognizing ? const Color(0xFF5A9B9C) : const Color(0xFF76A4A5);
+    Color innerColor = _isAIResponding ? const Color(0xFF5DADE2) :
+                      _isRecognizing ? const Color(0xFF8BB5B6) : const Color(0xFFB6D2D3);
+    IconData iconData = _isAIResponding ? Icons.psychology : Icons.mic;
+    
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
         return Transform.scale(
-          scale: _isRecognizing ? 1.0 : _pulseAnimation.value.clamp(0.9, 1.2),
+          scale: (_isRecognizing || _isAIResponding) ? 1.0 : _pulseAnimation.value.clamp(0.9, 1.2),
           child: Container(
             width: 256,
             height: 256,
             decoration: BoxDecoration(
-              color: _isRecognizing ? const Color(0xFF5A9B9C) : const Color(0xFF76A4A5),
+              color: buttonColor,
               shape: BoxShape.circle,
             ),
             child: Container(
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _isRecognizing ? const Color(0xFF8BB5B6) : const Color(0xFFB6D2D3),
+                color: innerColor,
                 shape: BoxShape.circle,
               ),
               child: Container(
@@ -892,9 +1106,9 @@ class _VoiceWakePageState extends State<VoiceWakePage>
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.mic,
+                  iconData,
                   size: 56,
-                  color: _isRecognizing ? const Color(0xFF5A9B9C) : const Color(0xFF76A4A5),
+                  color: buttonColor,
                 ),
               ),
             ),
@@ -905,6 +1119,13 @@ class _VoiceWakePageState extends State<VoiceWakePage>
   }
   
   Widget _buildStatusHint() {
+    String statusText = _isAIResponding ? 
+      (_aiResponse.isNotEmpty ? _aiResponse : "AI正在思考中...") :
+      (_result.isNotEmpty ? _result : "正在聆听您的声音...");
+    
+    String statusLabel = _isAIResponding ? "AI回复" : "实时识别";
+    Color statusColor = _isAIResponding ? const Color(0xFF3498DB) : const Color(0xFFE74C3C);
+    
     return Positioned(
       bottom: -80,
       child: Container(
@@ -931,24 +1152,35 @@ class _VoiceWakePageState extends State<VoiceWakePage>
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE74C3C),
+                    color: statusColor,
                     shape: BoxShape.circle,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  "实时识别",
+                  statusLabel,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha:0.8),
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
+                if (_isAIResponding) ...[
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 6),
             Text(
-              _result.isNotEmpty ? _result : "正在聆听您的声音...",
+              statusText,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
@@ -975,7 +1207,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildNavItem(Icons.phone, true, 'phone'),
+                  _buildAIAssistantNavItem(),
                   _buildSettingsNavItem(),
                 ],
               ),
@@ -998,21 +1230,21 @@ class _VoiceWakePageState extends State<VoiceWakePage>
     );
   }
 
-  Widget _buildNavItem(IconData icon, bool isActive, String itemType) {
-    bool isCurrentlyActive = _isVoiceQuerying && _currentQueryType == itemType;
+  Widget _buildAIAssistantNavItem() {
+    bool isCurrentlyActive = _isVoiceQuerying || _isAIResponding;
     
     return GestureDetector(
-      onTap: () => _handleNavItemTap(icon),
+      onTap: () => _handleNavItemTap(Icons.psychology),
       child: Column(
         children: [
           Container(
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: isCurrentlyActive ? const Color(0xFFE74C3C).withValues(alpha:0.1) : Colors.white,
+              color: isCurrentlyActive ? const Color(0xFF3498DB).withValues(alpha:0.1) : Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: isCurrentlyActive 
-                ? Border.all(color: const Color(0xFFE74C3C), width: 2)
+                ? Border.all(color: const Color(0xFF3498DB), width: 2)
                 : null,
               boxShadow: [
                 BoxShadow(
@@ -1023,11 +1255,11 @@ class _VoiceWakePageState extends State<VoiceWakePage>
               ],
             ),
             child: Icon(
-              icon,
+              Icons.psychology,
               size: 30,
               color: isCurrentlyActive 
-                ? const Color(0xFFE74C3C)
-                : (isActive ? const Color(0xFF76A4A5) : const Color(0xFF212528)),
+                ? const Color(0xFF3498DB)
+                : const Color(0xFF76A4A5),
             ),
           ),
           const SizedBox(height: 8),
@@ -1036,8 +1268,8 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             height: 6,
             decoration: BoxDecoration(
               color: isCurrentlyActive 
-                ? const Color(0xFFE74C3C)
-                : (isActive ? const Color(0xFF76A4A5) : Colors.transparent),
+                ? const Color(0xFF3498DB)
+                : const Color(0xFF76A4A5),
               borderRadius: BorderRadius.circular(3),
             ),
           ),
