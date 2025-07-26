@@ -10,6 +10,7 @@ import 'global_capture_test_page.dart';
 import 'action_recording_page.dart';
 import 'mcp_config_page.dart';
 import 'mcp_test_page.dart';
+import 'image_description_page.dart';
 import 'pages/url_schemes_page.dart';
 import 'pages/url_schemes_mcp_test_page.dart';
 
@@ -204,6 +205,22 @@ class HomePage extends StatelessWidget {
                 },
               ),
               
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: '图片描述',
+                subtitle: '基于百度千帆的智能图片理解与分析',
+                icon: Icons.image_search,
+                color: Colors.cyan,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ImageDescriptionPage()),
+                  );
+                },
+              ),
+
               const SizedBox(height: 16),
               
               _buildFeatureCard(

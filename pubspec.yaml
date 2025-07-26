@@ -77,6 +77,9 @@ dependencies:
   
   # Flutter contacts for accessing device contacts
   flutter_contacts: ^1.1.9+2
+  
+  # Image picker for selecting images from camera or gallery
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
