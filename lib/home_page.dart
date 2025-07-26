@@ -11,6 +11,7 @@ import 'action_recording_page.dart';
 import 'mcp_config_page.dart';
 import 'mcp_test_page.dart';
 import 'image_description_page.dart';
+import 'knowledge_page.dart';
 import 'pages/url_schemes_page.dart';
 import 'pages/url_schemes_mcp_test_page.dart';
 
@@ -217,6 +218,22 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const ImageDescriptionPage()),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 16),
+              
+              _buildFeatureCard(
+                context,
+                title: '知识库管理',
+                subtitle: '上传文档到知识库，智能搜索知识内容',
+                icon: Icons.library_books,
+                color: Colors.brown,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const KnowledgePage()),
                   );
                 },
               ),

@@ -80,6 +80,9 @@ dependencies:
   
   # Image picker for selecting images from camera or gallery
   image_picker: ^1.1.2
+  
+  # File picker for selecting files
+  file_picker: ^8.1.2
 
 dev_dependencies:
   flutter_test:
