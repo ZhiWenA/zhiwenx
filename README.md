@@ -1,10 +1,10 @@
-# 听见 🎙️
+# 声启 🎙️
 
 > 专为不识字老人设计的"赛博盲杖"，一款通过AI让老人只需语言描述需求即可自动规划任务并执行的手机语音助手
 
 ## 🌟 项目简介
 
-听见是一个智能语音助手，通过集成语音识别、AI决策和平台知识库技术，为用户提供智能化的应用推荐、启动和操作服务。本应用专门为不识字老人设计，**消除了文字障碍**，让老人也能享受数字便利，降低技术门槛，简单说话即可完成复杂操作。
+“声启“是一个智能语音助手，通过集成语音识别、AI决策和平台知识库技术，为用户提供智能化的应用推荐、启动和操作服务。本应用专门为不识字老人设计，**消除了文字障碍**，让老人也能享受数字便利，降低技术门槛，简单说话即可完成复杂操作。
 
 ## 🎯 核心功能
 
@@ -24,7 +24,6 @@
 - 智能推荐置信度评估
 
 ### 🚀 自动应用启动
-- 通过URL Schemes自动打开推荐的应用并操作
 - 支持一键启动和智能操作
 
 ## 🏪 支持的平台
@@ -152,39 +151,25 @@ BAIDU_SECRET_KEY=your_baidu_secret_key
 - `platform_content_knowledge.json`：平台知识库配置
 - `automation_rules_examples.json`：自动化规则示例
 
-## 🎨 特色功能
-
-### 🎯 精准推荐
-- 基于内容分析的智能平台选择
-- 多重评分机制确保推荐准确性
-
-### ⚡ 快速响应
-- 本地知识库，毫秒级决策
-- 异步处理，不影响用户体验
-
-### 🔄 优雅降级
-- 系统故障时自动回退到基础功能
-- 完善的错误处理和日志记录
-
-### 📈 易扩展
-- 支持新平台的快速集成
-- 模块化设计，便于功能扩展
-
-## 🤝 贡献指南
-
-我们欢迎所有形式的贡献！请查看 [贡献指南](CONTRIBUTING.md) 了解如何参与项目开发。
-
-### 开发流程
-
-1. Fork 本仓库
-2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开一个 Pull Request
-
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+## 👥 开发者
+
+### Shuaikx
+📮 邮箱：shuaikx828@gmail.com
+
+### Coin
+📮 邮箱：coinshuka@163.com
+
+### Tianli
+📮 邮箱：wutianli@tianli0.top
+
+## 🚀 更多项目
+
+1. **洪墨AI** - 适用于CMS系统的一站式AI解决方案：[https://ai.zhheo.com/](https://ai.zhheo.com/)
+2. **轻松AI写作** - 像cursor一样补全！：[https://zhikuu.com/](https://zhikuu.com/)
 
 ## 🙏 致谢
 
@@ -194,9 +179,8 @@ BAIDU_SECRET_KEY=your_baidu_secret_key
 
 ## 📞 联系我们
 
-- 项目主页：[https://github.com/your-username/tingjiian](https://github.com/your-username/tingjiian)
 - 问题反馈：[Issues](https://github.com/your-username/tingjiian/issues)
-- 邮箱：your-email@example.com
+- 邮箱：coinshuka@163.com
 
 ---
 
