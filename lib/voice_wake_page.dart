@@ -90,7 +90,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
 
   // 添加系统消息
   void _addSystemMessage() {
-    _messages.add(ChatMessage.system('你是一个智能语音助手，请用简洁、自然的中文回答问题。如果用户需要执行某些操作（如打电话、发短信、打开应用等），你可以使用相应的工具来帮助用户完成。'));
+    _messages.add(ChatMessage.system('你是一个智能语音助手，请用简洁、自然的中文回答问题。用户可能会要求你帮助打电话、发短信、打开应用、查询信息等。请根据用户的具体需求提供相应的帮助和建议。'));
   }
 
   void _initializeAnimations() {
@@ -175,7 +175,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
     config.secretKey = TencentCloudConfig.secretKey;
     config.voiceSpeed = 0;
     config.voiceVolume = 1;
-    config.voiceType = 601003;
+    config.voiceType = 1001;
     config.voiceLanguage = 1;
     config.codec = "mp3";
     _ttsController?.config = config;
@@ -478,169 +478,43 @@ class _VoiceWakePageState extends State<VoiceWakePage>
   }
 
   void _handleNavItemTap(IconData icon) async {
-    String itemType = 'general';
-    
-    if (_isVoiceQuerying) {
-      // 如果正在录音且点击的是同一个按钮，则取消录音
-      if (_currentQueryType == itemType) {
-        await _cancelVoiceQuery();
-        return;
-      }
-      return; // 防止重复点击不同按钮
+    if (_isRecognizing || _isAIResponding) {
+      // 如果正在进行语音操作，先取消当前操作
+      await _cancelVoiceQuery();
+      return;
     }
     
     if (icon == Icons.psychology) {
-      // AI助手功能 - 直接开始语音识别
-      await _startVoiceQuery('请说出您的需求，我是您的AI助手', 'general');
+      // AI助手功能 - 播放提示音后开始录音
+      await _startAIConversation();
     }
   }
 
-  // 添加状态变量来跟踪当前的语音查询状态
-  bool _isVoiceQuerying = false;
-  String _currentQueryType = '';
-  Timer? _voiceQueryTimer;
-
-  Future<void> _startVoiceQuery(String question, String actionType) async {
-    // 取消之前的定时器
-    _voiceQueryTimer?.cancel();
+  // 开始AI对话
+  Future<void> _startAIConversation() async {
+    if (_isRecognizing || _isAIResponding || !_isConnected) return;
     
-    // 显示准备状态（还未开始录音）
-    setState(() {
-      _isVoiceQuerying = true;
-      _currentQueryType = actionType;
-      _isPressing = false;
-      _isRecognizing = false;
-    });
-    
-    // 播放语音询问
+    // 播放提示音
     try {
-      await _ttsController?.synthesize(question, null);
+      await _ttsController?.synthesize('请说出您的需求，我是您的AI助手', null);
     } catch (e) {
       print('TTS播放失败: $e');
     }
 
-    // 等待TTS播放完成，增加延迟确保回音消失
-    await Future.delayed(const Duration(milliseconds: 3000));
+    // 等待TTS播放完成
+    await Future.delayed(const Duration(milliseconds: 2500));
     
-    // TTS播放完成后，开始真正的录音状态
-    setState(() {
-      _isPressing = true;
-      _isRecognizing = true;
-    });
-    
-    // 启动录音动画
-    _scaleController.forward();
-    _pulseController.stop();
-    _waveController.repeat();
-    _micController.forward();
-
-    // 设置5秒定时器
-    _voiceQueryTimer = Timer(const Duration(seconds: 5), () async {
-      if (_isRecognizing && mounted) {
-        await _stopVoiceQuery();
-        // 处理录音结果并跳转
-        if (_result.trim().isNotEmpty) {
-          _processVoiceQueryResult(_result, actionType);
-        }
-      }
-    });
-
-    try {
-      await for (final data in _controller!.recognize()) {
-        if (mounted) {
-          _handleVoiceQueryResult(data, actionType);
-        }
-      }
-    } catch (e) {
-      print('语音识别错误: $e');
-      _voiceQueryTimer?.cancel();
-      if (mounted) {
-        setState(() {
-          _isRecognizing = false;
-          _isPressing = false;
-        });
-      }
-      _scaleController.reverse();
-      _waveController.stop();
-      _micController.reverse();
-      _pulseController.repeat(reverse: true);
-    }
+    // 开始录音
+    await _startRecognition();
   }
 
-  void _handleVoiceQueryResult(ASRData data, String actionType) {
-    String recognizedText = '';
-    
-    switch (data.type) {
-      case ASRDataType.SLICE:
-        // 实时识别结果，立即显示
-        recognizedText = data.res ?? '';
-        if (recognizedText.isNotEmpty) {
-          setState(() {
-            _result = recognizedText;
-          });
-          log("语音查询实时识别: $recognizedText");
-        }
-        break;
-      case ASRDataType.SEGMENT:
-        // 分段结果，更新显示
-        recognizedText = data.res ?? '';
-        if (recognizedText.isNotEmpty) {
-          setState(() {
-            _result = recognizedText;
-          });
-          log("语音查询分段识别: $recognizedText");
-        }
-        break;
-      case ASRDataType.SUCCESS:
-        // 最终结果，发送给AI
-        recognizedText = data.result ?? '';
-        if (recognizedText.isNotEmpty) {
-          setState(() {
-            _result = recognizedText;
-          });
-          log("语音查询最终识别: $recognizedText");
-          
-          // 发送给AI处理
-          if (recognizedText.trim().isNotEmpty) {
-            _processVoiceQueryResult(recognizedText, actionType);
-          }
-        }
-        break;
-      case ASRDataType.NOTIFY:
-        recognizedText = data.info ?? '';
-        if (recognizedText.isNotEmpty) {
-          log("语音查询通知: $recognizedText");
-        }
-        break;
-    }
-  }
-
-  Future<void> _stopVoiceQuery() async {
-    _voiceQueryTimer?.cancel();
-    await _controller?.stop();
-    if (mounted) {
-      setState(() {
-        _isRecognizing = false;
-        _isPressing = false;
-        _isVoiceQuerying = false;
-        _currentQueryType = '';
-      });
-    }
-    
-    _scaleController.reverse();
-    _waveController.stop();
-    _micController.reverse();
-    _pulseController.repeat(reverse: true);
-  }
+  Timer? _voiceQueryTimer;
 
   Future<void> _cancelVoiceQuery() async {
     _voiceQueryTimer?.cancel();
     
     if (mounted) {
       setState(() {
-         _isVoiceQuerying = false;
-         _currentQueryType = '';
-         _activeNavItem = null;
          _isRecognizing = false;
          _isPressing = false;
          _result = ''; // 清空识别结果
@@ -670,26 +544,6 @@ class _VoiceWakePageState extends State<VoiceWakePage>
       await _ttsController?.synthesize('按住语音按钮开始录音，AI将智能理解您的需求并提供帮助', null);
     } catch (e) {
       print('TTS播放失败: $e');
-    }
-  }
-
-  void _processVoiceQueryResult(String text, String actionType) async {
-    await _stopVoiceQuery();
-    
-    if (text.trim().isEmpty) {
-      return;
-    }
-    
-    // 重置语音查询状态
-    setState(() {
-      _isVoiceQuerying = false;
-      _currentQueryType = '';
-    });
-    
-    // 发送给AI处理
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) {
-      _sendToAI(text);
     }
   }
 
@@ -729,35 +583,16 @@ class _VoiceWakePageState extends State<VoiceWakePage>
       child: Column(
         children: [
           Text(
-            _isVoiceQuerying ? '正在录音中...' : 
+            _isRecognizing ? '正在录音中...' : 
             _isAIResponding ? 'AI正在思考...' : '请说出您的需求',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w600,
-              color: _isVoiceQuerying ? const Color(0xFFE74C3C) : 
+              color: _isRecognizing ? const Color(0xFFE74C3C) : 
                      _isAIResponding ? const Color(0xFF3498DB) : const Color(0xFF76A4A5),
             ),
           ),
           const SizedBox(height: 8),
-          if (_isVoiceQuerying)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _currentQueryType == 'phone' ? '请说出联系人姓名' : '请说出您的需求',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Color(0xFFE74C3C),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.mic,
-                  color: Color(0xFFE74C3C),
-                  size: 20,
-                ),
-              ],
-            ),
           
           // AI回复展示区域
           if (_isAIResponding || _aiResponse.isNotEmpty)
@@ -838,7 +673,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             ),
           
           // 实时识别结果显示区域
-          if ((_isRecognizing || _isVoiceQuerying) && !_isAIResponding)
+          if (_isRecognizing && !_isAIResponding)
             Container(
               margin: const EdgeInsets.only(top: 16),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -903,7 +738,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
             ),
           
           // 添加滑动提示 - 使用动画和语音
-          if (!_isVoiceQuerying && !_isRecognizing && !_isAIResponding)
+          if (!_isRecognizing && !_isAIResponding)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: GestureDetector(
@@ -1231,7 +1066,7 @@ class _VoiceWakePageState extends State<VoiceWakePage>
   }
 
   Widget _buildAIAssistantNavItem() {
-    bool isCurrentlyActive = _isVoiceQuerying || _isAIResponding;
+    bool isCurrentlyActive = _isAIResponding;
     
     return GestureDetector(
       onTap: () => _handleNavItemTap(Icons.psychology),

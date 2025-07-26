@@ -106,7 +106,7 @@ class _VoiceAssistantPageState extends State<VoiceAssistantPage>
     
     _ttsConfig.voiceSpeed = 0;
     _ttsConfig.voiceVolume = 1;
-    _ttsConfig.voiceType = 601003;
+    _ttsConfig.voiceType = 1001;
     _ttsConfig.voiceLanguage = 1;
     _ttsConfig.codec = "mp3";
     _ttsConfig.connectTimeout = 10 * 1000;

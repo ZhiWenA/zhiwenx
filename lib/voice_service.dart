@@ -91,7 +91,7 @@ class VoiceService {
     // 设置语音合成参数
     config.voiceSpeed = 0; // 正常语速
     config.voiceVolume = 1; // 正常音量
-    config.voiceType = 601003; // 智瑜音色
+    config.voiceType = 1001; // 智瑜音色
     config.voiceLanguage = 1; // 中文
     config.codec = "mp3"; // 音频格式
     
